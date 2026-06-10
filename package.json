@@ -1,0 +1,24 @@
+{
+  "name": "context-grabber",
+  "description": "One-click bug reports for AI coding – console errors, failed requests & element context, formatted for Claude, ChatGPT & Cursor.",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "wxt",
+    "dev:firefox": "wxt -b firefox",
+    "build": "wxt build",
+    "zip": "wxt zip",
+    "check": "svelte-check --tsconfig ./tsconfig.json",
+    "postinstall": "wxt prepare"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.1.4",
+    "@wxt-dev/module-svelte": "^2.0.3",
+    "svelte": "^5.25.0",
+    "svelte-check": "^4.1.0",
+    "tailwindcss": "^4.1.4",
+    "typescript": "^5.8.0",
+    "wxt": "^0.20.6"
+  }
+}

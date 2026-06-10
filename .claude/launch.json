@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "built-extension-static",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["serve", ".output/chrome-mv3", "-l", "4173"],
+      "port": 4173
+    }
+  ]
+}
