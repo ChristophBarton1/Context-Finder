@@ -1,8 +1,7 @@
 import type { CaptureStore, PickedElement } from '@/utils/types';
-import { cgPageHook } from '@/utils/page-hook';
 
 /**
- * Isolated-world companion to the page hook.
+ * Isolated-world companion to the MAIN-world page hook.
  * Injects the hook as an anonymous inline script (preferred install path),
  * receives the captured data via postMessage, answers the popup's requests,
  * keeps the badge counter updated and implements the element picker.
@@ -13,19 +12,9 @@ export default defineContentScript({
   allFrames: true,
   matchAboutBlank: true,
   main() {
-    // Install the page hook as an anonymous inline script so its stack
-    // frames belong to the page, not to this extension. Chrome would
-    // otherwise list every console.warn/error of the page on our
-    // chrome://extensions error page. Blocked by CSP on strict pages –
-    // there the MAIN-world content script (injected.content.ts) takes over.
-    try {
-      const s = document.createElement('script');
-      s.textContent = `(${cgPageHook.toString()})();`;
-      (document.head || document.documentElement).appendChild(s);
-      s.remove();
-    } catch {
-      /* fallback handles it */
-    }
+    // The page hook is installed by injected.content.ts (MAIN-world script),
+    // which runs on every page without CSP issues. This isolated-world script
+    // handles the capture communication, badge updates, and element picker.
 
     // This script runs in EVERY frame. Child frames (e.g. the app preview
     // inside Lovable/Bolt) relay their findings to the top frame, which
