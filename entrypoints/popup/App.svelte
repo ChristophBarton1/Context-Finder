@@ -2,7 +2,9 @@
   import { onMount } from 'svelte';
   import type { CaptureData, PickedElement } from '@/utils/types';
   import { FREE_PICKS_PER_DAY } from '@/utils/types';
-  import { buildReport } from '@/utils/report';
+  import { groupErrors } from '@/utils/report';
+  import { EXPORT_TARGETS, buildExport } from '@/utils/export-targets';
+  import { LICENSE_STORAGE_KEY, isProKey, normalizeKey } from '@/utils/license';
   import { isTracker } from '@/utils/trackers';
 
   type ViewState = 'loading' | 'ready' | 'unavailable';
@@ -16,11 +18,19 @@
   let redactedCount = $state(0);
   let picksUsedToday = $state(0);
   let activeTab: 'report' | 'problems' = $state('report');
+  let targetId = $state('claude');
+  let menuOpen = $state(false);
+  let pro = $state(false);
+  let licenseOpen = $state(false);
+  let licenseInput = $state('');
+  let licenseError = $state(false);
 
   let tabId: number | undefined;
 
-  const picksLeft = $derived(Math.max(0, FREE_PICKS_PER_DAY - picksUsedToday));
+  const target = $derived(EXPORT_TARGETS.find((t) => t.id === targetId) ?? EXPORT_TARGETS[0]);
+  const picksLeft = $derived(pro ? 999 : Math.max(0, FREE_PICKS_PER_DAY - picksUsedToday));
   const errorCount = $derived(data?.errors.length ?? 0);
+  const groupedErrors = $derived(groupErrors(data?.errors ?? []));
   const failures = $derived((data?.network ?? []).filter((n) => !isTracker(n.url)));
   const trackers = $derived((data?.network ?? []).filter((n) => isTracker(n.url)));
   const problemCount = $derived(errorCount + failures.length);
@@ -40,12 +50,89 @@
       const usage = await browser.storage.local.get(todayKey());
       picksUsedToday = (usage[todayKey()] as number) ?? 0;
 
+      const prefs = await browser.storage.local.get(['cg:target', LICENSE_STORAGE_KEY]);
+      pro = isProKey(prefs[LICENSE_STORAGE_KEY]);
+      const saved = prefs['cg:target'];
+      if (
+        typeof saved === 'string' &&
+        EXPORT_TARGETS.some((t) => t.id === saved && (!t.pro || pro))
+      ) {
+        targetId = saved;
+      } else {
+        // No saved choice: if an AI tool is open in another tab, default to it.
+        try {
+          const tabs = await browser.tabs.query({ currentWindow: true });
+          for (const t of EXPORT_TARGETS) {
+            if (!t.hostPattern || (t.pro && !pro)) continue;
+            const open = tabs.some((tb) => {
+              try {
+                return t.hostPattern!.test(new URL(tb.url ?? '').host);
+              } catch {
+                return false;
+              }
+            });
+            if (open) {
+              targetId = t.id;
+              break;
+            }
+          }
+        } catch {
+          /* tab detection is optional */
+        }
+      }
+
       view = 'ready';
     } catch {
       // chrome:// pages, the Web Store, sandboxed frames etc.
       view = 'unavailable';
     }
   });
+
+  function selectTarget(id: string) {
+    const t = EXPORT_TARGETS.find((x) => x.id === id);
+    menuOpen = false;
+    if (!t) return;
+    if (t.pro && !pro) {
+      licenseOpen = true;
+      return;
+    }
+    targetId = id;
+    browser.storage.local.set({ 'cg:target': id }).catch(() => {});
+  }
+
+  function unlockPro() {
+    const key = normalizeKey(licenseInput);
+    if (isProKey(key)) {
+      pro = true;
+      licenseError = false;
+      licenseOpen = false;
+      browser.storage.local.set({ [LICENSE_STORAGE_KEY]: key }).catch(() => {});
+    } else {
+      licenseError = true;
+    }
+  }
+
+  function downloadMd() {
+    if (!pro) {
+      licenseOpen = true;
+      menuOpen = false;
+      return;
+    }
+    if (!data) return;
+    const report = buildExport(targetId, { data, picked, expectation, pro });
+    const blob = new Blob([report.text], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'debug-context.md';
+    a.click();
+    URL.revokeObjectURL(url);
+    menuOpen = false;
+  }
+
+  function openTargetSite() {
+    if (target.openUrl) browser.tabs.create({ url: target.openUrl }).catch(() => {});
+  }
 
   async function captureScreenshot(): Promise<Blob | null> {
     try {
@@ -61,7 +148,7 @@
     copyState = 'busy';
     // The text IS the report. (Chat inputs that receive text and image in a
     // single clipboard write keep only the image – so no combined writes.)
-    const report = buildReport({ data, picked, expectation });
+    const report = buildExport(targetId, { data, picked, expectation, pro });
     redactedCount = report.redactedCount;
     let ok = true;
     try {
@@ -87,8 +174,10 @@
 
   async function startPick() {
     if (tabId == null || picksLeft <= 0) return;
-    picksUsedToday += 1;
-    await browser.storage.local.set({ [todayKey()]: picksUsedToday });
+    if (!pro) {
+      picksUsedToday += 1;
+      await browser.storage.local.set({ [todayKey()]: picksUsedToday });
+    }
     await browser.tabs.sendMessage(tabId, { type: 'cg:startPick' });
     window.close();
   }
@@ -117,10 +206,10 @@
   }
 
   const PRO_FEATURES = [
-    'See exactly what each failed request sent and received',
-    'Hide more: custom rules for names, e-mails & secrets',
-    'Find your last 30 reports anytime',
-    'One-click formats for Claude, ChatGPT, Cursor & GitHub',
+    'See what the server answered on every failed request',
+    'Formats for Claude Code, Cursor, Gemini, Grok & GitHub',
+    'Client-ready summary in plain English',
+    'Unlimited element picker & report download',
   ];
 </script>
 
@@ -240,7 +329,7 @@
             <div class="max-h-[260px] overflow-y-auto pb-1.5">
               {#if errorCount > 0}
                 {@render sectionLabel(`Console errors · ${errorCount}`)}
-                {#each data.errors as err}
+                {#each groupedErrors as err}
                   <div class="flex items-start gap-2 px-4 py-1.5">
                     <span class="mt-[1px] shrink-0 rounded bg-danger-soft px-1.5 py-px font-mono text-[9.5px] font-medium text-danger">
                       {err.level}
@@ -248,6 +337,11 @@
                     <p class="min-w-0 font-mono text-[11px] leading-[1.5] break-words text-ink-2">
                       {err.message.slice(0, 200)}
                     </p>
+                    {#if err.count > 1}
+                      <span class="mt-[1px] ml-auto shrink-0 rounded bg-surface-2 px-1.5 py-px font-mono text-[9.5px] font-medium text-ink-3">
+                        ×{err.count}
+                      </span>
+                    {/if}
                   </div>
                 {/each}
               {/if}
@@ -318,36 +412,92 @@
       {/if}
 
       <!-- Primary action (always visible) -->
-      <div class="flex flex-col gap-1.5">
-        <button
-          onclick={copyReport}
-          disabled={copyState === 'busy'}
-          class="flex h-10 items-center justify-center gap-2 rounded-xl bg-accent text-[13.5px] font-medium text-white transition-all duration-150 hover:brightness-110 active:scale-[0.99] disabled:opacity-60"
-        >
-          {#if copyState === 'done'}
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+      <div class="relative flex flex-col gap-1.5">
+        <div class="flex overflow-hidden rounded-xl">
+          <button
+            onclick={copyReport}
+            disabled={copyState === 'busy'}
+            class="flex h-10 flex-1 items-center justify-center gap-2 bg-accent text-[13.5px] font-medium text-white transition-all duration-150 hover:brightness-110 active:scale-[0.99] disabled:opacity-60"
+          >
+            {#if copyState === 'done'}
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+              Copied!
+            {:else if copyState === 'busy'}
+              <span class="h-3.5 w-3.5 animate-spin rounded-full border-[1.5px] border-white/40 border-t-white"></span>
+              One moment…
+            {:else}
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <rect x="9" y="9" width="11" height="11" rx="2" stroke="currentColor" stroke-width="2" />
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" stroke="currentColor" stroke-width="2" />
+              </svg>
+              Copy for {target.label}
+            {/if}
+          </button>
+          <button
+            onclick={() => (menuOpen = !menuOpen)}
+            class="flex h-10 w-9 items-center justify-center border-l border-white/20 bg-accent text-white transition-all hover:brightness-110"
+            title="Choose where the report goes"
+            aria-label="Choose export format"
+          >
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" class="transition-transform {menuOpen ? 'rotate-180' : ''}" aria-hidden="true">
+              <path d="m6 9 6 6 6-6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
             </svg>
-            Copied!
-          {:else if copyState === 'busy'}
-            <span class="h-3.5 w-3.5 animate-spin rounded-full border-[1.5px] border-white/40 border-t-white"></span>
-            One moment…
-          {:else}
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <rect x="9" y="9" width="11" height="11" rx="2" stroke="currentColor" stroke-width="2" />
-              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" stroke="currentColor" stroke-width="2" />
-            </svg>
-            Copy report for my AI
-          {/if}
-        </button>
+          </button>
+        </div>
+
+        {#if menuOpen}
+          <div class="absolute top-[44px] right-0 left-0 z-20 overflow-hidden rounded-xl border border-line bg-surface shadow-lg">
+            {#each EXPORT_TARGETS as t}
+              <button
+                onclick={() => selectTarget(t.id)}
+                class="flex w-full items-center gap-2 px-4 py-2 text-left text-[12px] font-medium transition-colors hover:bg-surface-2 {t.id === targetId ? 'text-accent' : 'text-ink-2'}"
+              >
+                {t.label}
+                {#if t.id === targetId}
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" class="text-accent" aria-hidden="true">
+                    <path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+                  </svg>
+                {/if}
+                {#if t.pro && !pro}
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" class="ml-auto text-ink-3" aria-hidden="true">
+                    <rect x="5" y="11" width="14" height="9" rx="2" stroke="currentColor" stroke-width="2" />
+                    <path d="M8 11V8a4 4 0 1 1 8 0v3" stroke="currentColor" stroke-width="2" />
+                  </svg>
+                {/if}
+              </button>
+            {/each}
+            <div class="border-t border-line"></div>
+            <button
+              onclick={downloadMd}
+              class="flex w-full items-center gap-2 px-4 py-2 text-left text-[12px] font-medium text-ink-2 transition-colors hover:bg-surface-2"
+            >
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M12 3v12m0 0 4-4m-4 4-4-4M4 19h16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+              Download debug-context.md
+              {#if !pro}
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" class="ml-auto text-ink-3" aria-hidden="true">
+                  <rect x="5" y="11" width="14" height="9" rx="2" stroke="currentColor" stroke-width="2" />
+                  <path d="M8 11V8a4 4 0 1 1 8 0v3" stroke="currentColor" stroke-width="2" />
+                </svg>
+              {/if}
+            </button>
+          </div>
+        {/if}
+
         <p class="text-center text-[11px] leading-relaxed text-ink-3">
           {#if copyState === 'done'}
-            Now paste it into Claude, ChatGPT or Cursor
+            Now paste it into {target.label}
+            {#if target.openUrl}
+              · <button class="font-medium text-accent hover:underline" onclick={openTargetSite}>open {target.label} →</button>
+            {/if}
             {#if redactedCount > 0}
               · {redactedCount} {redactedCount === 1 ? 'secret' : 'secrets'} hidden
             {/if}
           {:else}
-            Then paste it into Claude, ChatGPT or Cursor — done.
+            Formatted for {target.label} — paste it there when copied.
           {/if}
         </p>
       </div>
@@ -366,7 +516,9 @@
               <path d="M12 2v4M12 18v4M2 12h4M18 12h4" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
             </svg>
             Point at the bug
-            <span class="font-mono text-[10px] text-ink-3">{picksLeft}/{FREE_PICKS_PER_DAY}</span>
+            {#if !pro}
+              <span class="font-mono text-[10px] text-ink-3">{picksLeft}/{FREE_PICKS_PER_DAY}</span>
+            {/if}
           </button>
           <button
             onclick={copyPhoto}
@@ -394,7 +546,7 @@
           </p>
         {/if}
 
-        <!-- Pro teaser -->
+        <!-- Pro -->
         <div class="rounded-xl border border-line bg-surface-2">
           <div class="flex items-center gap-2 border-b border-line px-4 py-2.5">
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" class="text-ink-3" aria-hidden="true">
@@ -402,20 +554,58 @@
               <path d="M8 11V8a4 4 0 1 1 8 0v3" stroke="currentColor" stroke-width="2" />
             </svg>
             <p class="text-[10.5px] font-semibold tracking-[0.08em] text-ink-2 uppercase">Pro</p>
-            <span class="ml-auto rounded-full border border-line px-2 py-px text-[9.5px] font-medium text-ink-3">
-              Coming soon
-            </span>
+            {#if pro}
+              <span class="ml-auto flex items-center gap-1 rounded-full border border-line px-2 py-px text-[9.5px] font-medium text-ok">
+                <span class="h-[5px] w-[5px] rounded-full bg-ok"></span>
+                Active
+              </span>
+            {:else}
+              <button
+                class="ml-auto rounded-full border border-line px-2 py-px text-[9.5px] font-medium text-ink-3 transition-colors hover:border-line-strong hover:text-ink"
+                onclick={() => (licenseOpen = !licenseOpen)}
+              >
+                I have a key
+              </button>
+            {/if}
           </div>
-          <ul class="flex flex-col gap-[7px] px-4 py-3">
-            {#each PRO_FEATURES as feature}
-              <li class="flex items-start gap-2 text-[11px] leading-snug text-ink-3">
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" class="mt-[2px] shrink-0" aria-hidden="true">
-                  <path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
-                </svg>
-                {feature}
-              </li>
-            {/each}
-          </ul>
+          {#if !pro}
+            <ul class="flex flex-col gap-[7px] px-4 py-3">
+              {#each PRO_FEATURES as feature}
+                <li class="flex items-start gap-2 text-[11px] leading-snug text-ink-3">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" class="mt-[2px] shrink-0" aria-hidden="true">
+                    <path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+                  </svg>
+                  {feature}
+                </li>
+              {/each}
+            </ul>
+            {#if licenseOpen}
+              <div class="flex flex-col gap-1.5 border-t border-line px-4 py-3">
+                <div class="flex gap-1.5">
+                  <input
+                    bind:value={licenseInput}
+                    placeholder="CG-XXXX-XXXX-XXXX"
+                    spellcheck="false"
+                    class="h-8 min-w-0 flex-1 rounded-lg border border-line bg-surface px-2.5 font-mono text-[11px] uppercase transition-colors placeholder:normal-case placeholder:text-ink-3 focus:border-accent focus:outline-none {licenseError ? 'border-danger' : ''}"
+                  />
+                  <button
+                    onclick={unlockPro}
+                    class="h-8 shrink-0 rounded-lg bg-accent px-3 text-[11.5px] font-medium text-white transition-all hover:brightness-110"
+                  >
+                    Unlock
+                  </button>
+                </div>
+                {#if licenseError}
+                  <p class="text-[10.5px] text-danger">That doesn't look like a valid key.</p>
+                {/if}
+              </div>
+            {/if}
+          {:else}
+            <p class="px-4 py-3 text-[11px] leading-snug text-ink-3">
+              Unlimited element picker · all AI formats · response inspector ·
+              report download — thank you for supporting Context Grabber.
+            </p>
+          {/if}
         </div>
       {/if}
     </div>

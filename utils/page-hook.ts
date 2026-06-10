@@ -26,6 +26,7 @@ export function cgPageHook() {
       method?: string;
       status: number;
       statusText?: string;
+      body?: string;
       time: string;
     }[],
   };
@@ -67,6 +68,7 @@ export function cgPageHook() {
     method?: string;
     status: number;
     statusText?: string;
+    body?: string;
   }) => {
     // A broken image repeated 40× across the page is one problem, not 40.
     if (store.network.some((n) => n.url === item.url && n.status === item.status)) return;
@@ -187,7 +189,23 @@ export function cgPageHook() {
       const res = await origFetch.apply(this ?? window, args);
       try {
         if (!res.ok) {
-          pushNetwork({ url, method, status: res.status, statusText: res.statusText });
+          // Read the error response body in the background (Pro: response
+          // inspector) – a 403 with {"error":"invalid API key"} is the fix.
+          const item = {
+            url,
+            method,
+            status: res.status,
+            statusText: res.statusText,
+            body: undefined as string | undefined,
+          };
+          res
+            .clone()
+            .text()
+            .then((t) => {
+              item.body = t.slice(0, 400);
+              pushNetwork(item);
+            })
+            .catch(() => pushNetwork(item));
         }
       } catch {
         /* never break the page */
@@ -247,12 +265,21 @@ export function cgPageHook() {
     try {
       this.addEventListener('loadend', () => {
         if (this.status >= 400 || this.status === 0) {
+          let body: string | undefined;
+          try {
+            if (!this.responseType || this.responseType === 'text') {
+              body = (this.responseText || '').slice(0, 400) || undefined;
+            }
+          } catch {
+            /* responseType mismatch – body stays undefined */
+          }
           pushNetwork({
             url: this.__cg?.url,
             method: this.__cg?.method,
             status: this.status,
             statusText:
               this.statusText || (this.status === 0 ? 'Network error / aborted' : ''),
+            body,
           });
         }
       });

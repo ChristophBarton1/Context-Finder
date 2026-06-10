@@ -61,6 +61,28 @@ export default defineContentScript({
       }
     });
 
+    // Lightweight DOM heuristics – knowing "this is WordPress + Elementor"
+    // or "this is Next.js" makes the AI's root-cause guess much better.
+    const detectStack = (): string[] => {
+      const found: string[] = [];
+      try {
+        const probe = (sel: string) => document.querySelector(sel) !== null;
+        if (probe('link[href*="wp-content"], script[src*="wp-content"], script[src*="wp-includes"]'))
+          found.push('WordPress');
+        if (probe('[class*="elementor"], script[src*="elementor"]')) found.push('Elementor');
+        if (probe('.woocommerce, script[src*="woocommerce"]')) found.push('WooCommerce');
+        if (probe('#__next, script#__NEXT_DATA__')) found.push('Next.js');
+        else if (probe('script[src*="react"], [data-reactroot]')) found.push('React');
+        if (probe('[data-v-app], script[src*="vue"]')) found.push('Vue');
+        if (probe('[class*="svelte-"]')) found.push('Svelte');
+        if (probe('[ng-version]')) found.push('Angular');
+        if (probe('script[src*="shopify"], link[href*="cdn.shopify"]')) found.push('Shopify');
+      } catch {
+        /* detection is best-effort */
+      }
+      return found;
+    };
+
     browser.runtime.onMessage.addListener((msg: { type?: string }) => {
       // Only the top frame answers the popup – child frames stay silent so
       // their (empty) responses never win the race.
@@ -90,6 +112,7 @@ export default defineContentScript({
             title: document.title,
             viewport: `${window.innerWidth}×${window.innerHeight}`,
             userAgent: navigator.userAgent,
+            stack: detectStack(),
           },
         });
       }

@@ -9,6 +9,8 @@ export interface NetworkEntry {
   method?: string;
   status: number;
   statusText?: string;
+  /** First bytes of the failed response body (Pro: response inspector). */
+  body?: string;
   time: string;
 }
 
@@ -22,6 +24,8 @@ export interface PageInfo {
   title: string;
   viewport: string;
   userAgent: string;
+  /** Detected frameworks/CMS, e.g. ["WordPress", "Elementor"]. */
+  stack?: string[];
 }
 
 export interface CaptureData extends CaptureStore {

@@ -1,4 +1,4 @@
-import type { CaptureData, PickedElement } from './types';
+import type { CaptureData, NetworkEntry, PickedElement } from './types';
 import { FREE_NETWORK_LIMIT } from './types';
 import { redact } from './redact';
 import { isTracker } from './trackers';
@@ -7,7 +7,15 @@ export interface ReportOptions {
   data: CaptureData;
   picked: PickedElement | null;
   expectation: string;
+  /** Pro unlocks response bodies in the report. */
+  pro?: boolean;
+  /** Target-specific "## Task" text; default asks for root cause + fix. */
+  task?: string;
 }
+
+const DEFAULT_TASK =
+  'Please analyze the information above, identify the most likely root cause, and provide a concrete fix. ' +
+  'If multiple issues exist, address the one blocking the expected behavior first.';
 
 function browserLine(userAgent: string): string {
   const chrome = userAgent.match(/Chrom(?:e|ium)\/([\d.]+)/);
@@ -17,8 +25,49 @@ function browserLine(userAgent: string): string {
   return userAgent.slice(0, 80);
 }
 
+/** Collapse repeated identical errors: one line with a ×N counter. */
+export function groupErrors(
+  errors: CaptureData['errors']
+): { level: string; message: string; count: number }[] {
+  const map = new Map<string, { level: string; message: string; count: number }>();
+  for (const e of errors) {
+    const key = `${e.level}|${e.message}`;
+    const g = map.get(key);
+    if (g) g.count += 1;
+    else map.set(key, { level: e.level, message: e.message, count: 1 });
+  }
+  return [...map.values()];
+}
+
+/** Classify what kind of problems were captured – improves the AI's aim. */
+export function detectIssueTags(data: CaptureData): string[] {
+  const tags = new Set<string>();
+  for (const e of data.errors) {
+    if (/content security policy|csp/i.test(e.message)) tags.add('CSP');
+    if (/cors|cross-origin/i.test(e.message)) tags.add('CORS');
+    if (e.level === 'uncaught' || /typeerror|referenceerror/i.test(e.message))
+      tags.add('JS runtime error');
+    if (e.level === 'unhandled promise') tags.add('unhandled promise');
+  }
+  for (const n of data.network) {
+    if (isTracker(n.url)) continue;
+    if (n.status === 404) tags.add('404 not found');
+    else if (n.status === 401 || n.status === 403) tags.add('auth/permission (401/403)');
+    else if (n.status >= 500) tags.add('server error (5xx)');
+    else if (n.status === 0) tags.add('blocked/failed request');
+    if (/content security policy/i.test(n.statusText ?? '')) tags.add('CSP');
+  }
+  return [...tags];
+}
+
+function bodySnippet(n: NetworkEntry): string | null {
+  if (!n.body) return null;
+  const oneLine = n.body.replace(/`/g, "'").replace(/\s+/g, ' ').trim().slice(0, 300);
+  return oneLine ? oneLine : null;
+}
+
 export function buildReport(opts: ReportOptions): { text: string; redactedCount: number } {
-  const { data, picked, expectation } = opts;
+  const { data, picked, expectation, pro = false, task = DEFAULT_TASK } = opts;
   const lines: string[] = [];
 
   lines.push('# Bug report');
@@ -30,14 +79,23 @@ export function buildReport(opts: ReportOptions): { text: string; redactedCount:
   lines.push(`**URL:** ${data.page.url}`);
   lines.push(`**Page title:** ${data.page.title || '(none)'}`);
   lines.push(`**Browser:** ${browserLine(data.page.userAgent)} · viewport ${data.page.viewport}`);
+  if (data.page.stack && data.page.stack.length > 0) {
+    lines.push(`**Detected stack:** ${data.page.stack.join(' · ')}`);
+  }
+  const tags = detectIssueTags(data);
+  if (tags.length > 0) {
+    lines.push(`**Detected issue types:** ${tags.join(', ')}`);
+  }
   lines.push('');
 
   if (data.errors.length > 0) {
-    lines.push(`## Console errors (${data.errors.length})`);
+    const grouped = groupErrors(data.errors);
+    const uniqueNote = grouped.length !== data.errors.length ? `, ${grouped.length} unique` : '';
+    lines.push(`## Console errors (${data.errors.length}${uniqueNote})`);
     lines.push('');
     lines.push('```');
-    for (const e of data.errors) {
-      lines.push(`[${e.level}] ${e.message}`);
+    for (const e of grouped) {
+      lines.push(`[${e.level}] ${e.message}${e.count > 1 ? `  (×${e.count})` : ''}`);
     }
     lines.push('```');
     lines.push('');
@@ -59,6 +117,10 @@ export function buildReport(opts: ReportOptions): { text: string; redactedCount:
     for (const n of shown) {
       const status = n.status === 0 ? 'failed' : `${n.status}${n.statusText ? ' ' + n.statusText : ''}`;
       lines.push(`- \`${n.method ?? 'GET'}\` ${n.url ?? '(unknown url)'} → **${status}**`);
+      if (pro) {
+        const body = bodySnippet(n);
+        if (body) lines.push(`  - server response: \`${body}\``);
+      }
     }
     if (hidden > 0) {
       lines.push(`- _…and ${hidden} more (not included)_`);
@@ -99,13 +161,10 @@ export function buildReport(opts: ReportOptions): { text: string; redactedCount:
 
   lines.push('## Task');
   lines.push('');
-  lines.push(
-    'Please analyze the information above, identify the most likely root cause, and provide a concrete fix. ' +
-      'If multiple issues exist, address the one blocking the expected behavior first.'
-  );
+  lines.push(task);
   lines.push('');
   lines.push('---');
-  lines.push('_Generated with Context Grabber_');
+  lines.push('_Generated with Context Grabber — 100% locally, no data left this computer_');
 
   return (({ text, count }) => ({ text, redactedCount: count }))(redact(lines.join('\n')));
 }
