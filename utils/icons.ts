@@ -34,28 +34,48 @@ export interface BrandIcon {
   monogram?: string;
 }
 
+/**
+ * Brand colors that are too dark for a dark popup (GitHub black, X black,
+ * Anthropic near-black, Windsurf near-black …) fall back to currentColor so
+ * the mark stays clearly visible in both themes.
+ */
+function visibleColor(hex: string): string | undefined {
+  const r = parseInt(hex.slice(0, 2), 16);
+  const g = parseInt(hex.slice(2, 4), 16);
+  const b = parseInt(hex.slice(4, 6), 16);
+  const luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  return luminance < 80 ? undefined : `#${hex}`;
+}
+
+const icon = (si: { path: string; hex: string }): BrandIcon => ({
+  path: si.path,
+  color: visibleColor(si.hex),
+});
+
 export const TARGET_ICONS: Record<string, BrandIcon> = {
-  claude: { path: siClaude.path, color: `#${siClaude.hex}` },
-  chatgpt: { monogram: 'G', color: '#10A37F' },
-  'claude-code': { path: siAnthropic.path },
-  'codex-cli': { monogram: '>_' },
-  cursor: { path: siCursor.path },
-  windsurf: { path: siWindsurf.path, color: `#${siWindsurf.hex}` },
-  gemini: { path: siGooglegemini.path, color: `#${siGooglegemini.hex}` },
-  grok: { path: siX.path },
-  github: { path: siGithub.path },
+  claude: icon(siClaude),
+  // OpenAI had its marks removed from simple-icons (trademark request) –
+  // no icon is more professional than a fake one.
+  chatgpt: {},
+  'claude-code': icon(siAnthropic),
+  'codex-cli': {},
+  cursor: icon(siCursor),
+  windsurf: icon(siWindsurf),
+  gemini: icon(siGooglegemini),
+  grok: icon(siX),
+  github: icon(siGithub),
   client: { monogram: '@' },
   developer: { monogram: '</>' },
 };
 
 export const STACK_ICONS: Record<string, BrandIcon> = {
-  WordPress: { path: siWordpress.path, color: `#${siWordpress.hex}` },
-  Elementor: { path: siElementor.path, color: `#${siElementor.hex}` },
-  WooCommerce: { path: siWoocommerce.path, color: `#${siWoocommerce.hex}` },
-  Shopify: { path: siShopify.path, color: `#${siShopify.hex}` },
-  React: { path: siReact.path, color: `#${siReact.hex}` },
-  Vue: { path: siVuedotjs.path, color: `#${siVuedotjs.hex}` },
-  Svelte: { path: siSvelte.path, color: `#${siSvelte.hex}` },
-  Angular: { path: siAngular.path, color: `#${siAngular.hex}` },
-  'Next.js': { path: siNextdotjs.path },
+  WordPress: icon(siWordpress),
+  Elementor: icon(siElementor),
+  WooCommerce: icon(siWoocommerce),
+  Shopify: icon(siShopify),
+  React: icon(siReact),
+  Vue: icon(siVuedotjs),
+  Svelte: icon(siSvelte),
+  Angular: icon(siAngular),
+  'Next.js': icon(siNextdotjs),
 };

@@ -120,6 +120,10 @@ export default defineContentScript({
         startPicker();
         return Promise.resolve(true);
       }
+      if (msg?.type === 'cg:selectRegion') {
+        startRegionSelect();
+        return Promise.resolve(true);
+      }
       return undefined;
     });
 
@@ -244,6 +248,95 @@ export default defineContentScript({
       document.addEventListener('mousemove', onMove, true);
       document.addEventListener('click', onClick, true);
       document.addEventListener('keydown', onKey, true);
+    }
+
+    /**
+     * Snipping-tool style region selection: dim the page, let the user drag
+     * a rectangle, then ask the background to capture + crop it. The overlay
+     * is removed BEFORE the capture so it never appears in the screenshot.
+     */
+    function startRegionSelect() {
+      const { host, root } = makeOverlay();
+      host.style.pointerEvents = 'auto';
+      host.style.width = '100vw';
+      host.style.height = '100vh';
+      host.style.cursor = 'crosshair';
+
+      const dim = document.createElement('div');
+      dim.style.cssText =
+        'position:fixed;inset:0;background:rgba(0,0,0,0.35);';
+      const sel = document.createElement('div');
+      sel.style.cssText =
+        'position:fixed;display:none;border:1.5px solid #6e7ef7;background:rgba(110,126,247,0.12);' +
+        'box-shadow:0 0 0 100000px rgba(0,0,0,0.35);';
+      const hint = document.createElement('div');
+      hint.textContent = 'Drag to select an area · Esc to cancel';
+      hint.style.cssText =
+        'position:fixed;top:12px;left:50%;transform:translateX(-50%);pointer-events:none;' +
+        'background:#17171a;color:#f4f4f5;border:1px solid #2e2e33;border-radius:8px;' +
+        'padding:8px 14px;font:500 13px/1.4 system-ui,sans-serif;box-shadow:0 4px 16px rgba(0,0,0,0.3);';
+      root.append(dim, sel, hint);
+
+      let startX = 0;
+      let startY = 0;
+      let dragging = false;
+
+      const cleanup = () => {
+        window.removeEventListener('keydown', onKey, true);
+        host.remove();
+      };
+
+      const rectFrom = (e: MouseEvent) => {
+        const x = Math.min(startX, e.clientX);
+        const y = Math.min(startY, e.clientY);
+        const w = Math.abs(e.clientX - startX);
+        const h = Math.abs(e.clientY - startY);
+        return { x, y, w, h };
+      };
+
+      host.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        dragging = true;
+        startX = e.clientX;
+        startY = e.clientY;
+        dim.style.display = 'none'; // the selection's box-shadow dims instead
+        sel.style.display = 'block';
+      });
+
+      host.addEventListener('mousemove', (e) => {
+        if (!dragging) return;
+        const r = rectFrom(e);
+        sel.style.left = `${r.x}px`;
+        sel.style.top = `${r.y}px`;
+        sel.style.width = `${r.w}px`;
+        sel.style.height = `${r.h}px`;
+      });
+
+      host.addEventListener('mouseup', (e) => {
+        if (!dragging) return;
+        const r = rectFrom(e);
+        cleanup();
+        if (r.w < 5 || r.h < 5) return;
+        // Two frames so the page repaints without the overlay before capture.
+        requestAnimationFrame(() =>
+          requestAnimationFrame(() => {
+            browser.runtime
+              .sendMessage({ type: 'cg:captureRegion', rect: r, dpr: window.devicePixelRatio || 1 })
+              .then((ok) =>
+                toast(ok ? 'Area captured – open Context Grabber again' : 'Capture failed – try again')
+              )
+              .catch(() => {});
+          })
+        );
+      });
+
+      const onKey = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          cleanup();
+        }
+      };
+      window.addEventListener('keydown', onKey, true);
     }
 
     function toast(text: string) {

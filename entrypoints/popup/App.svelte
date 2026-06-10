@@ -29,6 +29,17 @@
   let capturedAt = $state(Date.now());
   let now = $state(Date.now());
   let detailsOpen = $state(false);
+  let historyOpen = $state(false);
+  let history = $state<HistoryEntry[]>([]);
+  let historyCopied = $state(-1);
+
+  interface HistoryEntry {
+    host: string;
+    time: number;
+    problems: number;
+    target: string;
+    text: string;
+  }
 
   let tabId: number | undefined;
   let expectationEl: HTMLTextAreaElement | undefined = $state();
@@ -86,8 +97,12 @@
 
         await fetchData();
 
-        const stored = await browser.storage.session.get(`picked_${tabId}`);
+        const stored = await browser.storage.session.get([`picked_${tabId}`, `shot_${tabId}`]);
         picked = (stored[`picked_${tabId}`] as PickedElement) ?? null;
+        shotUrl = (stored[`shot_${tabId}`] as string) ?? null;
+
+        const hist = await browser.storage.local.get('cg:history');
+        history = (hist['cg:history'] as HistoryEntry[]) ?? [];
 
         const usage = await browser.storage.local.get(todayKey());
         picksUsedToday = (usage[todayKey()] as number) ?? 0;
@@ -165,6 +180,18 @@
     }
     copyState = ok ? 'done' : 'idle';
     if (!ok) return;
+    // Remember this report locally (last 15) so it can be re-copied later.
+    if (data) {
+      const entry: HistoryEntry = {
+        host: pageDisplay(data.page.url),
+        time: Date.now(),
+        problems: problemCount,
+        target: target.label,
+        text: preview.text,
+      };
+      history = [entry, ...history.filter((h) => !(h.host === entry.host && h.target === entry.target))].slice(0, 15);
+      browser.storage.local.set({ 'cg:history': $state.snapshot(history) }).catch(() => {});
+    }
     if (target.openUrl) {
       const prefillUrl = target.prefill?.(preview.text);
       const url = prefillUrl && prefillUrl.length <= MAX_PREFILL_URL ? prefillUrl : target.openUrl;
@@ -193,9 +220,36 @@
   async function captureShot() {
     try {
       shotUrl = await browser.tabs.captureVisibleTab({ format: 'png' });
+      if (tabId != null && shotUrl) {
+        browser.storage.session.set({ [`shot_${tabId}`]: shotUrl }).catch(() => {});
+      }
     } catch {
       shotUrl = null;
     }
+  }
+
+  async function selectRegion() {
+    if (tabId == null) return;
+    await browser.tabs.sendMessage(tabId, { type: 'cg:selectRegion' });
+    window.close();
+  }
+
+  async function copyHistory(i: number) {
+    try {
+      await navigator.clipboard.writeText(history[i].text);
+      historyCopied = i;
+      setTimeout(() => (historyCopied = -1), 2000);
+    } catch {
+      /* clipboard denied */
+    }
+  }
+
+  function agoLabel(ts: number): string {
+    const s = Math.max(0, Math.round((now - ts) / 1000));
+    if (s < 60) return `${s}s ago`;
+    if (s < 3600) return `${Math.round(s / 60)}m ago`;
+    if (s < 86400) return `${Math.round(s / 3600)}h ago`;
+    return `${Math.round(s / 86400)}d ago`;
   }
 
   async function copyPhoto() {
@@ -277,11 +331,14 @@
     <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" class="shrink-0">
       <path d={icon.path} fill={icon.color ?? 'currentColor'} />
     </svg>
-  {:else}
+  {:else if icon?.monogram}
     <span
       class="flex shrink-0 items-center justify-center font-mono font-bold"
       style="width:{size}px;height:{size}px;font-size:{Math.round(size * 0.52)}px;{icon?.color ? `color:${icon.color}` : ''}"
-    >{icon?.monogram ?? '?'}</span>
+    >{icon.monogram}</span>
+  {:else}
+    <!-- no usable brand mark: keep labels aligned with an empty slot -->
+    <span class="shrink-0" style="width:{size}px;height:{size}px"></span>
   {/if}
 {/snippet}
 
@@ -296,8 +353,9 @@
   <!-- Header -->
   <header class="flex items-center gap-2.5 px-5 pt-4 pb-3">
     <span class="flex h-[26px] w-[26px] items-center justify-center rounded-[7px] bg-accent-soft">
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" class="text-accent" aria-hidden="true">
-        <path d="M13 2 4.5 13.5h6L10 22l8.5-11.5h-6L13 2Z" fill="currentColor" />
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" class="text-accent" aria-hidden="true">
+        <path d="M21 8 12 3 3 8v8l9 5 9-5V8Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round" />
+        <path d="M3 8l9 5 9-5M12 13v9" stroke="currentColor" stroke-width="2" stroke-linejoin="round" />
       </svg>
     </span>
     <h1 class="text-[13px] font-semibold tracking-[-0.01em]">Context Grabber</h1>
@@ -416,7 +474,49 @@
             </svg>
             Recapture
           </button>
+          {#if history.length > 0}
+            <button
+              onclick={() => (historyOpen = !historyOpen)}
+              class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border transition-colors {historyOpen
+                ? 'border-accent text-accent'
+                : 'border-line text-ink-3 hover:border-line-strong hover:text-ink'}"
+              title="Recent reports"
+              aria-label="Recent reports"
+            >
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2" />
+                <path d="M12 7v5l3 3" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+              </svg>
+            </button>
+          {/if}
         </div>
+        {#if historyOpen && history.length > 0}
+          <div class="mt-3 overflow-hidden rounded-lg border border-line bg-surface-2">
+            <p class="px-3 pt-2 pb-1 text-[9.5px] font-semibold tracking-[0.08em] text-ink-3 uppercase">
+              Recent reports
+            </p>
+            <div class="max-h-[150px] overflow-y-auto pb-1">
+              {#each history as h, i}
+                <div class="flex items-center gap-2 px-3 py-1.5">
+                  <div class="min-w-0 flex-1">
+                    <p class="truncate text-[11px] font-medium" title={h.host}>{h.host}</p>
+                    <p class="text-[9.5px] text-ink-3">
+                      {agoLabel(h.time)} · {h.problems} {h.problems === 1 ? 'problem' : 'problems'} · {h.target}
+                    </p>
+                  </div>
+                  <button
+                    onclick={() => copyHistory(i)}
+                    class="shrink-0 rounded-md border border-line px-2 py-1 text-[10px] font-medium transition-colors {historyCopied === i
+                      ? 'border-ok text-ok'
+                      : 'text-ink-2 hover:border-line-strong hover:text-ink'}"
+                  >
+                    {historyCopied === i ? 'Copied' : 'Copy'}
+                  </button>
+                </div>
+              {/each}
+            </div>
+          </div>
+        {/if}
         <!-- Stat tiles -->
         <div class="mt-3 grid grid-cols-4 gap-2">
           <div class="flex flex-col items-center rounded-lg border border-line bg-surface-2 px-1 py-2">
@@ -673,16 +773,27 @@
               second message after the report.
             </p>
           {/if}
-          <div class="grid grid-cols-2 gap-2">
+          <div class="grid grid-cols-3 gap-2">
             <button
               onclick={captureShot}
-              class="flex h-9 items-center justify-center gap-1.5 rounded-xl border border-line bg-surface text-[12px] font-medium text-ink-2 transition-colors hover:border-line-strong hover:text-ink"
+              class="flex h-9 items-center justify-center gap-1.5 rounded-xl border border-line bg-surface text-[11.5px] font-medium text-ink-2 transition-colors hover:border-line-strong hover:text-ink"
             >
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                 <rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="2" />
                 <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2" />
               </svg>
               {shotUrl ? 'Retake' : 'Capture'}
+            </button>
+            <button
+              onclick={selectRegion}
+              title="Drag a rectangle over the part of the page you want to capture"
+              class="flex h-9 items-center justify-center gap-1.5 rounded-xl border border-line bg-surface text-[11.5px] font-medium text-ink-2 transition-colors hover:border-line-strong hover:text-ink"
+            >
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M4 7V5a1 1 0 0 1 1-1h2M17 4h2a1 1 0 0 1 1 1v2M20 17v2a1 1 0 0 1-1 1h-2M7 20H5a1 1 0 0 1-1-1v-2" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                <rect x="8" y="8" width="8" height="8" rx="1" stroke="currentColor" stroke-width="2" stroke-dasharray="3 2" />
+              </svg>
+              Select area
             </button>
             <button
               onclick={copyPhoto}
