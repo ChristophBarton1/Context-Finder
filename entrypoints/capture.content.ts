@@ -10,6 +10,8 @@ import { cgPageHook } from '@/utils/page-hook';
 export default defineContentScript({
   matches: ['<all_urls>'],
   runAt: 'document_start',
+  allFrames: true,
+  matchAboutBlank: true,
   main() {
     // Install the page hook as an anonymous inline script so its stack
     // frames belong to the page, not to this extension. Chrome would
@@ -25,27 +27,75 @@ export default defineContentScript({
       /* fallback handles it */
     }
 
+    // This script runs in EVERY frame. Child frames (e.g. the app preview
+    // inside Lovable/Bolt) relay their findings to the top frame, which
+    // aggregates everything and is the only frame that answers the popup.
+    const isTop = window.self === window.top;
     let store: CaptureStore = { errors: [], network: [] };
+    const frameStores = new Map<string, CaptureStore>();
+
+    const totalErrors = () =>
+      store.errors.length +
+      [...frameStores.values()].reduce((n, s) => n + s.errors.length, 0);
+
     let lastBadge = -1;
+    const sendCounts = () => {
+      const n = totalErrors();
+      if (n === lastBadge) return;
+      lastBadge = n;
+      browser.runtime.sendMessage({ type: 'cg:counts', errors: n }).catch(() => {});
+    };
 
     window.addEventListener('message', (e) => {
-      if (e.source !== window || e.data?.source !== 'context-grabber') return;
-      const payload = e.data.payload as CaptureStore;
-      if (!payload || !Array.isArray(payload.errors)) return;
-      store = payload;
-      if (store.errors.length !== lastBadge) {
-        lastBadge = store.errors.length;
-        browser.runtime
-          .sendMessage({ type: 'cg:counts', errors: store.errors.length })
-          .catch(() => {});
+      const d = e.data;
+      if (d?.source === 'context-grabber' && e.source === window) {
+        const payload = d.payload as CaptureStore;
+        if (!payload || !Array.isArray(payload.errors)) return;
+        store = payload;
+        if (isTop) {
+          sendCounts();
+        } else {
+          try {
+            window.top?.postMessage(
+              { source: 'context-grabber-frame', href: location.href, payload: store },
+              '*'
+            );
+          } catch {
+            /* sandboxed frames may refuse – nothing we can do */
+          }
+        }
+      } else if (isTop && d?.source === 'context-grabber-frame' && e.source !== window) {
+        const payload = d.payload as CaptureStore;
+        if (!payload || !Array.isArray(payload.errors) || typeof d.href !== 'string') return;
+        frameStores.set(d.href, payload);
+        sendCounts();
       }
     });
 
     browser.runtime.onMessage.addListener((msg: { type?: string }) => {
+      // Only the top frame answers the popup – child frames stay silent so
+      // their (empty) responses never win the race.
+      if (!isTop) return undefined;
       if (msg?.type === 'cg:getData') {
+        const frames = [...frameStores.entries()];
+        const frameLabel = (href: string) => {
+          try {
+            return new URL(href).host || href.slice(0, 60);
+          } catch {
+            return href.slice(0, 60);
+          }
+        };
         return Promise.resolve({
-          errors: store.errors,
-          network: store.network,
+          errors: [
+            ...store.errors,
+            ...frames.flatMap(([href, s]) =>
+              s.errors.map((err) => ({
+                ...err,
+                message: `${err.message} [in iframe: ${frameLabel(href)}]`,
+              }))
+            ),
+          ],
+          network: [...store.network, ...frames.flatMap(([, s]) => s.network)],
           page: {
             url: location.href,
             title: document.title,

@@ -14,6 +14,8 @@ export default defineContentScript({
   matches: ['<all_urls>'],
   runAt: 'document_start',
   world: 'MAIN',
+  allFrames: true,
+  matchAboutBlank: true,
   main() {
     cgPageHook();
   },
