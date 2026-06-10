@@ -52,7 +52,9 @@ export const EXPORT_TARGETS: ExportTarget[] = [
     hostPattern: /(^|\.)chatgpt\.com$/,
   },
   { id: 'claude-code', label: 'Claude Code', pro: false, task: CODEBASE_TASK },
+  { id: 'codex-cli', label: 'Codex CLI', pro: false, task: CODEBASE_TASK },
   { id: 'cursor', label: 'Cursor', pro: false, task: CODEBASE_TASK },
+  { id: 'windsurf', label: 'Windsurf', pro: false, task: CODEBASE_TASK },
   {
     id: 'gemini',
     label: 'Gemini',
@@ -77,6 +79,7 @@ export const EXPORT_TARGETS: ExportTarget[] = [
       'Please triage and link related issues.',
   },
   { id: 'client', label: 'Client summary', pro: true },
+  { id: 'developer', label: 'Developer hand-off', pro: true },
 ];
 
 function pageHost(url: string): string {
@@ -131,11 +134,55 @@ function buildClientSummary(opts: ReportOptions): { text: string; redactedCount:
   return (({ text, count }) => ({ text, redactedCount: count }))(redact(lines.join('\n')));
 }
 
+/** Short technical hand-off for a teammate – context, not prose. */
+function buildDeveloperHandoff(opts: ReportOptions): { text: string; redactedCount: number } {
+  const { data, picked, expectation } = opts;
+  const failures = data.network.filter((n) => !isTracker(n.url));
+  const errors = groupErrors(data.errors);
+  const tags = detectIssueTags(data);
+  const lines: string[] = [];
+
+  lines.push('## Bug context');
+  lines.push('');
+  lines.push(`- **Page:** ${data.page.url}`);
+  if (expectation.trim()) lines.push(`- **Repro / expected:** ${expectation.trim()}`);
+  if (data.page.stack?.length) lines.push(`- **Stack:** ${data.page.stack.join(' · ')}`);
+  if (tags.length) lines.push(`- **Suspected area:** ${tags.join(', ')}`);
+  lines.push('');
+  if (errors.length > 0) {
+    lines.push('**Main errors:**');
+    lines.push('```');
+    for (const e of errors.slice(0, 5)) {
+      lines.push(`[${e.level}] ${e.message.slice(0, 300)}${e.count > 1 ? `  (×${e.count})` : ''}`);
+    }
+    lines.push('```');
+    lines.push('');
+  }
+  if (failures.length > 0) {
+    lines.push('**Failed requests:**');
+    for (const n of failures.slice(-5)) {
+      lines.push(`- \`${n.method ?? 'GET'}\` ${n.url} → ${n.status === 0 ? 'failed' : n.status}`);
+      if (opts.pro && n.body) {
+        lines.push(`  - response: \`${n.body.replace(/`/g, "'").replace(/\s+/g, ' ').slice(0, 200)}\``);
+      }
+    }
+    lines.push('');
+  }
+  if (picked) {
+    lines.push(`**Element:** \`${picked.selector}\``);
+    lines.push('');
+  }
+  lines.push('_Captured locally with Context Grabber._');
+
+  return (({ text, count }) => ({ text, redactedCount: count }))(redact(lines.join('\n')));
+}
+
 export function buildExport(
   targetId: string,
   opts: ReportOptions
 ): { text: string; redactedCount: number } {
   if (targetId === 'client') return buildClientSummary(opts);
+  if (targetId === 'developer') return buildDeveloperHandoff(opts);
   const target = EXPORT_TARGETS.find((t) => t.id === targetId);
   return buildReport({ ...opts, task: target?.task ?? opts.task });
 }
