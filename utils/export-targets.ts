@@ -4,20 +4,30 @@ import { redact } from './redact';
 import { isTracker } from './trackers';
 
 /**
- * Export targets for the "Copy for …" dropdown. Each target tunes the
+ * Export targets for the "Send to …" dropdown. Each target tunes the
  * report's task section (and sometimes the whole format) to where the text
- * will be pasted. Free tier: Claude + ChatGPT. Everything else is Pro.
+ * goes. ALL chat tools are free – the AI workflow is the core product.
+ * Pro covers the formats that save professionals time (GitHub, client
+ * summary) plus the response inspector / download / unlimited picker.
  */
 export interface ExportTarget {
   id: string;
   label: string;
   pro: boolean;
-  /** Opened via the "Open …" link after copying. */
+  /** Opened after copying (chat site of this tool). */
   openUrl?: string;
+  /**
+   * Builds a URL that opens the tool with the report already in the chat
+   * input. Only for tools with official prefill support (?q=…).
+   */
+  prefill?: (text: string) => string;
   /** Detects an open tab of this AI tool to preselect the target. */
   hostPattern?: RegExp;
   task?: string;
 }
+
+/** Above this URL length we open the plain site and rely on the clipboard. */
+export const MAX_PREFILL_URL = 6000;
 
 const CODEBASE_TASK =
   'I am working in my local codebase. Use the browser debug context above to locate the likely ' +
@@ -30,6 +40,7 @@ export const EXPORT_TARGETS: ExportTarget[] = [
     label: 'Claude',
     pro: false,
     openUrl: 'https://claude.ai/new',
+    prefill: (t) => `https://claude.ai/new?q=${encodeURIComponent(t)}`,
     hostPattern: /(^|\.)claude\.ai$/,
   },
   {
@@ -37,22 +48,24 @@ export const EXPORT_TARGETS: ExportTarget[] = [
     label: 'ChatGPT',
     pro: false,
     openUrl: 'https://chatgpt.com/',
+    prefill: (t) => `https://chatgpt.com/?q=${encodeURIComponent(t)}`,
     hostPattern: /(^|\.)chatgpt\.com$/,
   },
-  { id: 'claude-code', label: 'Claude Code', pro: true, task: CODEBASE_TASK },
-  { id: 'cursor', label: 'Cursor', pro: true, task: CODEBASE_TASK },
+  { id: 'claude-code', label: 'Claude Code', pro: false, task: CODEBASE_TASK },
+  { id: 'cursor', label: 'Cursor', pro: false, task: CODEBASE_TASK },
   {
     id: 'gemini',
     label: 'Gemini',
-    pro: true,
+    pro: false,
     openUrl: 'https://gemini.google.com/app',
     hostPattern: /(^|\.)gemini\.google\.com$/,
   },
   {
     id: 'grok',
     label: 'Grok',
-    pro: true,
+    pro: false,
     openUrl: 'https://grok.com/',
+    prefill: (t) => `https://grok.com/?q=${encodeURIComponent(t)}`,
     hostPattern: /(^|\.)grok\.com$/,
   },
   {

@@ -3,7 +3,7 @@
   import type { CaptureData, PickedElement } from '@/utils/types';
   import { FREE_PICKS_PER_DAY } from '@/utils/types';
   import { groupErrors } from '@/utils/report';
-  import { EXPORT_TARGETS, buildExport } from '@/utils/export-targets';
+  import { EXPORT_TARGETS, MAX_PREFILL_URL, buildExport } from '@/utils/export-targets';
   import { LICENSE_STORAGE_KEY, isProKey, normalizeKey } from '@/utils/license';
   import { isTracker } from '@/utils/trackers';
 
@@ -130,9 +130,6 @@
     menuOpen = false;
   }
 
-  function openTargetSite() {
-    if (target.openUrl) browser.tabs.create({ url: target.openUrl }).catch(() => {});
-  }
 
   async function captureScreenshot(): Promise<Blob | null> {
     try {
@@ -157,7 +154,16 @@
       ok = false;
     }
     copyState = ok ? 'done' : 'idle';
-    if (ok) setTimeout(() => (copyState = 'idle'), 2600);
+    if (!ok) return;
+    // Open the AI with the report already in the chat input (where the tool
+    // supports ?q= prefill). Clipboard stays the safety net: very long
+    // reports exceed sane URL lengths, then the user just pastes.
+    if (target.openUrl) {
+      const prefillUrl = target.prefill?.(report.text);
+      const url = prefillUrl && prefillUrl.length <= MAX_PREFILL_URL ? prefillUrl : target.openUrl;
+      browser.tabs.create({ url }).catch(() => {});
+    }
+    setTimeout(() => (copyState = 'idle'), 2600);
   }
 
   async function copyPhoto() {
@@ -207,8 +213,8 @@
 
   const PRO_FEATURES = [
     'See what the server answered on every failed request',
-    'Formats for Claude Code, Cursor, Gemini, Grok & GitHub',
     'Client-ready summary in plain English',
+    'GitHub issue format for maintainers',
     'Unlimited element picker & report download',
   ];
 </script>
@@ -432,7 +438,7 @@
                 <rect x="9" y="9" width="11" height="11" rx="2" stroke="currentColor" stroke-width="2" />
                 <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" stroke="currentColor" stroke-width="2" />
               </svg>
-              Copy for {target.label}
+              {target.openUrl ? `Send to ${target.label}` : `Copy for ${target.label}`}
             {/if}
           </button>
           <button
@@ -489,13 +495,20 @@
 
         <p class="text-center text-[11px] leading-relaxed text-ink-3">
           {#if copyState === 'done'}
-            Now paste it into {target.label}
-            {#if target.openUrl}
-              · <button class="font-medium text-accent hover:underline" onclick={openTargetSite}>open {target.label} →</button>
+            {#if target.prefill}
+              {target.label} opened — your report is already in the chat
+            {:else if target.openUrl}
+              {target.label} opened — paste with Ctrl+V
+            {:else}
+              Copied — paste it into {target.label}
             {/if}
             {#if redactedCount > 0}
               · {redactedCount} {redactedCount === 1 ? 'secret' : 'secrets'} hidden
             {/if}
+          {:else if target.prefill}
+            Opens {target.label} with the report already in the chat.
+          {:else if target.openUrl}
+            Copies the report and opens {target.label} — just paste.
           {:else}
             Formatted for {target.label} — paste it there when copied.
           {/if}
