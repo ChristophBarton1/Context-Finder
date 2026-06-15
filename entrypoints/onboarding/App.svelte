@@ -48,7 +48,7 @@
 </script>
 
 {#snippet cubeLogo(size: number)}
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" class="text-accent" aria-hidden="true">
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true">
     <path d="M21 8 12 3 3 8v8l9 5 9-5V8Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round" />
     <path d="M3 8l9 5 9-5M12 13v9" stroke="currentColor" stroke-width="2" stroke-linejoin="round" />
   </svg>
@@ -56,8 +56,8 @@
 
 <!-- Toolbar hint after the bug is triggered -->
 {#if bugTriggered}
-  <div class="fixed top-3 right-6 z-50 flex items-center gap-2.5 rounded-xl border border-line bg-surface px-4 py-2.5 shadow-lg">
-    <span class="flex h-6 w-6 items-center justify-center rounded-md bg-accent-soft">
+  <div class="fixed top-3 right-6 z-50 flex items-center gap-2.5 rounded-xl border border-border-strong bg-surface px-4 py-2.5 shadow-lg">
+    <span class="flex h-6 w-6 items-center justify-center rounded-md bg-accent text-accent-ink">
       {@render cubeLogo(12)}
     </span>
     <p class="text-[12.5px] font-medium">
@@ -69,33 +69,33 @@
   </div>
 {/if}
 
-<div class="mx-auto flex min-h-screen max-w-[1040px] flex-col px-6 py-12 font-sans antialiased lg:px-10">
+<div class="cg-brand mx-auto flex min-h-screen max-w-[1120px] flex-col px-6 py-14 font-sans antialiased lg:px-10">
   <!-- Top bar -->
-  <header class="mb-14 flex items-center gap-2.5">
-    <span class="flex h-8 w-8 items-center justify-center rounded-[9px] bg-accent-soft">
-      {@render cubeLogo(15)}
+  <header class="cg-rise mb-16 flex items-center gap-3">
+    <span class="flex h-9 w-9 items-center justify-center rounded-[10px] bg-accent text-accent-ink shadow-[0_1px_0_rgba(28,24,18,0.18)]">
+      {@render cubeLogo(17)}
     </span>
-    <span class="text-[14px] font-semibold tracking-[-0.01em]">Context Grabber</span>
-    <span class="ml-auto flex items-center gap-1.5 rounded-full border border-line px-2.5 py-1 text-[11px] font-medium text-ink-2">
+    <span class="text-[16px] font-medium tracking-[-0.01em]">Context Grabber</span>
+    <span class="ml-auto flex items-center gap-1.5 rounded-full border border-border-strong bg-surface px-2.5 py-1 text-[11px] font-medium text-ink-2">
       <span class="h-[5px] w-[5px] rounded-full bg-ok"></span>
       Local only
     </span>
   </header>
 
-  <div class="grid items-start gap-14 lg:grid-cols-[1fr_400px]">
+  <div class="grid items-start gap-16 lg:grid-cols-[1fr_400px]">
     <!-- Left: copy + steps + demo -->
     <div>
-      <div class="flex flex-wrap items-center gap-2">
-        <span class="rounded-full border border-line bg-surface px-2.5 py-1 text-[10.5px] font-medium text-ink-2">No account</span>
-        <span class="rounded-full border border-line bg-surface px-2.5 py-1 text-[10.5px] font-medium text-ink-2">No servers</span>
-        <span class="rounded-full border border-line bg-surface px-2.5 py-1 text-[10.5px] font-medium text-ink-2">Free</span>
+      <div class="cg-rise flex flex-wrap items-center gap-2">
+        <span class="rounded-full border border-border-strong bg-surface px-2.5 py-1 text-[10.5px] font-medium text-ink-2">No account</span>
+        <span class="rounded-full border border-border-strong bg-surface px-2.5 py-1 text-[10.5px] font-medium text-ink-2">No servers</span>
+        <span class="rounded-full border border-border-strong bg-surface px-2.5 py-1 text-[10.5px] font-medium text-ink-2">Free</span>
       </div>
 
-      <h1 class="mt-5 max-w-md text-[36px] leading-[1.12] font-semibold tracking-[-0.025em]">
-        Catch your first bug in
-        <span class="text-accent">30 seconds.</span>
+      <p class="cg-rise mt-7 text-[11px] font-semibold tracking-[0.2em] text-ink-3 uppercase" style="animation-delay:.05s">Welcome</p>
+      <h1 class="font-display cg-rise mt-4 max-w-2xl text-[clamp(2.6rem,5.2vw,3.9rem)]" style="animation-delay:.1s">
+        Catch your first bug<br />in <span class="cg-mark">30 seconds</span>.
       </h1>
-      <p class="mt-4 max-w-md text-[15px] leading-relaxed text-ink-2">
+      <p class="cg-rise mt-6 max-w-lg text-[17px] leading-relaxed text-ink-2" style="animation-delay:.16s">
         When your AI-built app breaks, “it doesn't work” makes the AI guess.
         Context Grabber hands it the actual errors — so the fix works on the first try.
       </p>
@@ -109,9 +109,9 @@
             {/if}
             <span
               class="flex h-[27px] w-[27px] shrink-0 items-center justify-center rounded-full font-mono text-[11.5px] font-medium {i === 0 && !bugTriggered
-                ? 'bg-accent text-white'
+                ? 'bg-accent text-accent-ink'
                 : i === 0 || (i === 1 && bugTriggered)
-                  ? 'border border-accent bg-accent-soft text-accent'
+                  ? 'border border-ink-3 bg-surface-2 text-ink'
                   : 'border border-line bg-surface text-ink-2'}"
             >
               {#if i === 0 && bugTriggered}
@@ -131,7 +131,7 @@
       </ol>
 
       <!-- Demo app -->
-      <div class="mt-10 overflow-hidden rounded-xl border border-line bg-surface">
+      <div class="cg-rise mt-12 overflow-hidden rounded-2xl border border-line bg-surface" style="animation-delay:.22s">
         <div class="flex items-center gap-1.5 border-b border-line px-4 py-2.5">
           <span class="h-[9px] w-[9px] rounded-full bg-line-strong"></span>
           <span class="h-[9px] w-[9px] rounded-full bg-line-strong"></span>
@@ -165,7 +165,7 @@
             <button
               onclick={breakIt}
               disabled={bugTriggered}
-              class="h-9 shrink-0 rounded-[10px] bg-accent px-5 text-[13px] font-medium text-white transition-all duration-150 hover:brightness-110 active:scale-[0.99] disabled:opacity-50"
+              class="h-9 shrink-0 rounded-full bg-accent px-5 text-[13px] font-semibold text-accent-ink transition-all duration-200 ease-out hover:bg-white active:scale-[0.99] disabled:opacity-50"
             >
               Load my profile
             </button>
@@ -195,7 +195,7 @@
     </div>
 
     <!-- Right: what your AI receives -->
-    <aside class="lg:sticky lg:top-10">
+    <aside class="cg-rise lg:sticky lg:top-10" style="animation-delay:.28s">
       <p class="mb-3 text-[10.5px] font-semibold tracking-[0.1em] text-ink-3 uppercase">
         What your AI receives
       </p>
@@ -214,13 +214,13 @@
           <p class="text-[14px] font-semibold">React</p>
           <p class="text-center text-[8.5px] leading-tight text-ink-3">Detected</p>
         </div>
-        <div class="flex flex-col items-center rounded-lg border border-line bg-surface px-1 py-2">
-          <p class="text-[14px] font-semibold text-accent">3</p>
+        <div class="flex flex-col items-center rounded-lg border border-accent bg-accent-soft px-1 py-2">
+          <p class="text-[14px] font-semibold text-ink">3</p>
           <p class="text-center text-[8.5px] leading-tight text-ink-3">Secrets Redacted</p>
         </div>
       </div>
 
-      <div class="overflow-hidden rounded-xl border border-line bg-surface">
+      <div class="overflow-hidden rounded-2xl border border-line bg-surface">
         <div class="flex items-center gap-1.5 border-b border-line px-4 py-2.5">
           <span class="h-[9px] w-[9px] rounded-full bg-line-strong"></span>
           <span class="h-[9px] w-[9px] rounded-full bg-line-strong"></span>
@@ -261,10 +261,10 @@ fix…</pre>
   </div>
 
   <!-- Feature row -->
-  <div class="mt-20 grid gap-4 border-t border-line pt-10 sm:grid-cols-3">
+  <div class="cg-rise mt-28 grid gap-5 border-t border-line pt-12 sm:grid-cols-3" style="animation-delay:.34s">
     {#each features as f}
-      <div class="rounded-xl border border-line bg-surface px-5 py-4">
-        <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-accent-soft text-accent">
+      <div class="rounded-2xl border border-line bg-surface px-5 py-4">
+        <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-accent text-accent-ink">
           {#if f.icon === 'shield'}
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
               <path d="M12 2 4 5.5V11c0 5 3.4 9.4 8 11 4.6-1.6 8-6 8-11V5.5L12 2Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round" />
@@ -295,7 +295,7 @@ fix…</pre>
       passwords are automatically redacted before a report is copied.
     </p>
     <span class="flex items-center gap-2 sm:ml-auto">
-      <span class="flex h-5 w-5 items-center justify-center rounded-md bg-accent-soft">
+      <span class="flex h-5 w-5 items-center justify-center rounded-md bg-accent text-accent-ink">
         {@render cubeLogo(10)}
       </span>
       <span class="text-[11px] font-medium text-ink-3">Context Grabber</span>

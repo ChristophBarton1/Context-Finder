@@ -1,14 +1,13 @@
 import { cgPageHook } from '@/utils/page-hook';
 
 /**
- * MAIN-world FALLBACK for the page hook.
+ * Installs the page hook in the MAIN world.
  *
- * The preferred install path is the anonymous inline <script> injected by
- * capture.content.ts – code injected that way belongs to the page, so
- * Chrome's extension error collector does not attribute the page's console
- * noise to this extension. On pages whose CSP blocks inline scripts the
- * inline copy never runs, and this content script installs the hook instead
- * (the `__contextGrabber` guard inside ensures exactly one install).
+ * WXT registers this as a world:'MAIN' content script in the manifest, so the
+ * browser injects it on every page at document_start, in the page's own JS
+ * world and without being subject to the page's CSP. This is the single
+ * install path for cgPageHook(); the `__contextGrabber` guard inside the hook
+ * still ensures exactly one install even if the script ever runs twice.
  */
 export default defineContentScript({
   matches: ['<all_urls>'],

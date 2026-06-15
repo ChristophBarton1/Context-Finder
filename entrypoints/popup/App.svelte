@@ -8,7 +8,7 @@
   import { TARGET_ICONS, STACK_ICONS, type BrandIcon } from '@/utils/icons';
   import { isTracker } from '@/utils/trackers';
 
-  type ViewState = 'loading' | 'ready' | 'unavailable';
+  type ViewState = 'loading' | 'ready' | 'unavailable' | 'needsreload';
   type Tab = 'export' | 'report' | 'screenshot' | 'element' | 'network';
 
   let view: ViewState = $state('loading');
@@ -42,6 +42,7 @@
   }
 
   let tabId: number | undefined;
+  let pageUrl = '';
   let expectationEl: HTMLTextAreaElement | undefined = $state();
 
   const target = $derived(EXPORT_TARGETS.find((t) => t.id === targetId) ?? EXPORT_TARGETS[0]);
@@ -87,16 +88,46 @@
     now = Date.now();
   }
 
+  // A page that was already open before the extension was (re)loaded has no
+  // capture script attached yet, so sendMessage fails. That is fixable with a
+  // reload — unlike genuinely restricted pages (chrome://, the Web Store,
+  // file://) where extensions can never run. Distinguish the two so we show
+  // the right message instead of a misleading "off-limits".
+  function isRestrictedUrl(u: string): boolean {
+    if (!u) return true; // url hidden from us → almost always a chrome:// page
+    if (!/^https?:\/\//i.test(u)) return true; // chrome:, edge:, file:, about:, …
+    return /^https:\/\/(chromewebstore\.google\.com|chrome\.google\.com\/webstore)/i.test(u);
+  }
+
+  async function reloadPage() {
+    if (tabId == null) return;
+    try {
+      await browser.tabs.reload(tabId);
+    } catch {
+      /* ignore */
+    }
+    window.close();
+  }
+
   onMount(() => {
     const interval = setInterval(() => (now = Date.now()), 5000);
     (async () => {
       try {
         const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
         tabId = tab?.id;
+        pageUrl = tab?.url ?? '';
         if (tabId == null) throw new Error('no tab');
 
+        // Capturability test: this throws only when no capture script is
+        // attached (restricted page, or a tab opened before the extension).
+        // The storage/pref reads below must not influence this decision.
         await fetchData();
+      } catch {
+        view = isRestrictedUrl(pageUrl) ? 'unavailable' : 'needsreload';
+        return;
+      }
 
+      try {
         const stored = await browser.storage.session.get([`picked_${tabId}`, `shot_${tabId}`]);
         picked = (stored[`picked_${tabId}`] as PickedElement) ?? null;
         shotUrl = (stored[`shot_${tabId}`] as string) ?? null;
@@ -137,11 +168,10 @@
           }
         }
 
-        view = 'ready';
       } catch {
-        // chrome:// pages, the Web Store, sandboxed frames etc.
-        view = 'unavailable';
+        /* storage/pref reads are best-effort — capture already works here */
       }
+      view = 'ready';
     })();
     return () => clearInterval(interval);
   });
@@ -397,6 +427,29 @@
         Chrome doesn't let extensions look at its own pages. Switch to the app
         you're building and click the icon again.
       </p>
+    </div>
+  {:else if view === 'needsreload'}
+    <div class="flex flex-col items-center px-6 py-12 text-center">
+      <span class="mb-3.5 flex h-10 w-10 items-center justify-center rounded-full bg-accent-soft">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" class="text-accent" aria-hidden="true">
+          <path d="M21 12a9 9 0 1 1-2.64-6.36M21 3v6h-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      </span>
+      <p class="text-[13.5px] font-medium">Reload to start capturing</p>
+      <p class="mt-1.5 max-w-[260px] text-[12.5px] leading-relaxed text-ink-2">
+        This tab was already open before Context Grabber started, so nothing was
+        recorded yet. Reload it once and it will catch console errors and failed
+        requests from the very first line.
+      </p>
+      <button
+        onclick={reloadPage}
+        class="mt-4 flex h-9 items-center justify-center gap-1.5 rounded-xl bg-accent px-5 text-[12.5px] font-medium text-white transition-all hover:brightness-110 active:scale-[0.99]"
+      >
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M21 12a9 9 0 1 1-2.64-6.36M21 3v6h-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+        Reload this page
+      </button>
     </div>
   {:else if data}
     <div class="flex flex-col gap-3 px-5 pb-4">

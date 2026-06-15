@@ -2,7 +2,7 @@
   "name": "context-grabber",
   "description": "One-click bug reports for AI coding – console errors, failed requests & element context, formatted for Claude, ChatGPT & Cursor.",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.3.0",
   "type": "module",
   "scripts": {
     "dev": "wxt",

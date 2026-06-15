@@ -1,0 +1,356 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Context Grabber has been uninstalled</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #02050a;
+        --surface: #0c0f14;
+        --surface-2: #14161b;
+        --border: #24262b;
+        --border-strong: #45474d;
+        --text: #f5f8ff;
+        --text-2: #c1c4ce;
+        --text-3: #898a93;
+        --accent: #f5f8ff;
+        --accent-bright: #ffffff;
+        --accent-ink: #02050a;
+        --ok: #71cc49;
+        --font: 'Space Grotesk', system-ui, -apple-system, 'Segoe UI', sans-serif;
+      }
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+      body {
+        background: var(--bg);
+        background-image: radial-gradient(
+          120% 70% at 50% -10%,
+          rgba(245, 248, 255, 0.06) 0%,
+          rgba(245, 248, 255, 0) 55%
+        );
+        color: var(--text);
+        font-family: var(--font);
+        line-height: 1.3;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 28px 24px 48px;
+      }
+      .wrap { width: 100%; max-width: 560px; }
+
+      @keyframes up { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+      .hero, .card, .section-label, .chips, .actions {
+        animation: up 0.7s cubic-bezier(0.16, 0.84, 0.44, 1) both;
+      }
+      .card { animation-delay: 0.08s; }
+      .section-label { animation-delay: 0.14s; }
+      .chips { animation-delay: 0.18s; }
+      .actions { animation-delay: 0.22s; }
+      @media (prefers-reduced-motion: reduce) { .hero, .card, .section-label, .chips, .actions { animation: none; } }
+
+      header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding-bottom: 26px;
+        border-bottom: 1px solid var(--border);
+      }
+      .seal {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 38px;
+        height: 38px;
+        border-radius: 12px;
+        background: var(--accent);
+        color: var(--accent-ink);
+      }
+      .wordmark { font-size: 16px; font-weight: 600; letter-spacing: -0.02em; }
+      .pill {
+        margin-left: auto;
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 6px 13px;
+        border: 1px solid var(--border-strong);
+        border-radius: 100px;
+        font-size: 11px;
+        font-weight: 500;
+        color: var(--text-2);
+      }
+      .pill .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--ok); }
+
+      .hero { padding: 60px 0 8px; text-align: center; }
+      .crest {
+        width: 60px;
+        height: 60px;
+        margin: 0 auto 30px;
+        border: 1.5px solid var(--accent);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--accent);
+        position: relative;
+      }
+      .crest::before,
+      .crest::after {
+        content: '';
+        position: absolute;
+        height: 1px;
+        width: 40px;
+        background: linear-gradient(90deg, transparent, var(--border-strong));
+        top: 50%;
+      }
+      .crest::before { right: 100%; margin-right: 18px; }
+      .crest::after { left: 100%; margin-left: 18px; transform: scaleX(-1); }
+
+      .eyebrow {
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--accent);
+      }
+      h1 {
+        font-weight: 700;
+        font-size: 62px;
+        line-height: 1.02;
+        letter-spacing: -0.035em;
+        margin: 14px 0 0;
+      }
+      .lede {
+        margin: 20px auto 0;
+        max-width: 400px;
+        font-size: 16px;
+        line-height: 1.55;
+        color: var(--text-2);
+      }
+
+      .card {
+        margin-top: 42px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 24px;
+        padding: 24px 26px;
+      }
+      .card-title {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 14px;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+      }
+      .card-title .ic { color: var(--accent); display: inline-flex; }
+      .facts { margin-top: 18px; display: flex; flex-direction: column; gap: 14px; }
+      .fact { display: flex; gap: 12px; font-size: 13.5px; line-height: 1.5; color: var(--text-2); }
+      .fact .tick {
+        flex: none;
+        margin-top: 1px;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: var(--accent);
+        color: var(--accent-ink);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .fact strong { color: var(--text); font-weight: 600; }
+
+      .section-label {
+        margin: 38px 0 14px;
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--text-3);
+        text-align: center;
+      }
+      .chips { display: flex; flex-wrap: wrap; gap: 9px; justify-content: center; }
+      .chip {
+        font-family: inherit;
+        font-size: 13px;
+        color: var(--text-2);
+        background: var(--surface-2);
+        border: 1px solid var(--border-strong);
+        border-radius: 100px;
+        padding: 9px 16px;
+        cursor: pointer;
+        transition: all 0.14s ease;
+      }
+      .chip:hover { border-color: var(--accent); color: var(--text); }
+      .chip[aria-pressed='true'] {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: var(--accent-ink);
+        font-weight: 600;
+      }
+
+      .actions {
+        margin-top: 24px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        justify-content: center;
+      }
+      .btn {
+        font-family: inherit;
+        font-size: 14px;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+        border-radius: 100px;
+        padding: 13px 26px;
+        cursor: pointer;
+        border: 1px solid transparent;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        text-decoration: none;
+        transition: all 0.14s ease;
+      }
+      .btn-primary { background: var(--accent); color: var(--accent-ink); }
+      .btn-primary:hover { background: var(--accent-bright); }
+      .btn-ghost { background: transparent; border-color: var(--border-strong); color: var(--text); }
+      .btn-ghost:hover { border-color: var(--text-2); }
+
+      footer {
+        margin-top: 48px;
+        padding-top: 22px;
+        border-top: 1px solid var(--border);
+        text-align: center;
+        font-size: 12px;
+        line-height: 1.6;
+        color: var(--text-3);
+      }
+      footer .mono { color: var(--accent); font-weight: 500; }
+
+      @media (max-width: 480px) {
+        h1 { font-size: 46px; }
+        .hero { padding-top: 44px; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <span class="seal" aria-hidden="true">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+            <path d="M21 8 12 3 3 8v8l9 5 9-5V8Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round" />
+            <path d="M3 8l9 5 9-5M12 13v9" stroke="currentColor" stroke-width="2" stroke-linejoin="round" />
+          </svg>
+        </span>
+        <span class="wordmark">Context Grabber</span>
+        <span class="pill"><span class="dot"></span>Uninstalled</span>
+      </header>
+
+      <section class="hero">
+        <div class="crest" aria-hidden="true">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+            <path d="M21 8 12 3 3 8v8l9 5 9-5V8Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" />
+            <path d="M3 8l9 5 9-5M12 13v9" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" />
+          </svg>
+        </div>
+        <p class="eyebrow">Until next time</p>
+        <h1>Farewell.</h1>
+        <p class="lede">
+          Context Grabber has been removed from your browser. Thanks for giving it a try —
+          we hope it caught a bug or two.
+        </p>
+      </section>
+
+      <div class="card">
+        <p class="card-title">
+          <span class="ic" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <path d="M12 2 4 5.5V11c0 5 3.4 9.4 8 11 4.6-1.6 8-6 8-11V5.5L12 2Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round" />
+              <path d="m9 12 2 2 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </span>
+          Nothing of yours was left behind
+        </p>
+        <div class="facts">
+          <div class="fact">
+            <span class="tick" aria-hidden="true">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" /></svg>
+            </span>
+            <span><strong>Nothing was ever sent.</strong> Everything Context Grabber captured stayed on this device — no servers, no telemetry, no account.</span>
+          </div>
+          <div class="fact">
+            <span class="tick" aria-hidden="true">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" /></svg>
+            </span>
+            <span><strong>Your data is already gone.</strong> Removing the extension cleared every report, screenshot and setting it stored locally.</span>
+          </div>
+          <div class="fact">
+            <span class="tick" aria-hidden="true">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" /></svg>
+            </span>
+            <span><strong>Nothing else to do.</strong> No leftover files, no lingering permissions — you're all set.</span>
+          </div>
+        </div>
+      </div>
+
+      <p class="section-label">Mind telling us what went wrong?</p>
+      <div class="chips" id="reasons">
+        <button class="chip" aria-pressed="false">Too complex</button>
+        <button class="chip" aria-pressed="false">Didn't catch my bug</button>
+        <button class="chip" aria-pressed="false">Found something better</button>
+        <button class="chip" aria-pressed="false">Just testing</button>
+        <button class="chip" aria-pressed="false">Performance</button>
+      </div>
+
+      <div class="actions">
+        <a class="btn btn-primary" id="feedback" href="https://github.com/ChristophBarton1/Context-Finder/issues/new">
+          Share feedback
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M7 17 17 7M9 7h8v8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+        </a>
+        <a class="btn btn-ghost" href="https://github.com/ChristophBarton1/Context-Finder">
+          Reinstall
+        </a>
+      </div>
+
+      <footer>
+        <p>Context Grabber runs <span class="mono">100% locally</span> — built for honest, first-try AI bug fixes.</p>
+      </footer>
+    </div>
+
+    <script>
+      (function () {
+        var selected = '';
+        var chips = document.querySelectorAll('#reasons .chip');
+        chips.forEach(function (chip) {
+          chip.addEventListener('click', function () {
+            var alreadyOn = chip.getAttribute('aria-pressed') === 'true';
+            chips.forEach(function (c) { c.setAttribute('aria-pressed', 'false'); });
+            chip.setAttribute('aria-pressed', alreadyOn ? 'false' : 'true');
+            selected = alreadyOn ? '' : chip.textContent.trim();
+          });
+        });
+
+        var base = 'https://github.com/ChristophBarton1/Context-Finder/issues/new';
+        document.getElementById('feedback').addEventListener('click', function (e) {
+          e.preventDefault();
+          var title = 'Uninstall feedback';
+          var body =
+            'Reason: ' + (selected || '(not specified)') + '\n\n' +
+            'What could we have done better?\n';
+          var url =
+            base +
+            '?title=' + encodeURIComponent(title) +
+            '&body=' + encodeURIComponent(body);
+          window.open(url, '_blank', 'noopener');
+        });
+      })();
+    </script>
+  </body>
+</html>

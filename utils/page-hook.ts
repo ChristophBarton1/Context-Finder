@@ -1,17 +1,13 @@
 /**
  * The complete page-world capture hook as ONE self-contained function.
  *
- * It is used in two ways:
- *  1. Serialized via `cgPageHook.toString()` and injected as an anonymous
- *     inline <script> by capture.content.ts. This is the preferred path:
- *     the code then belongs to the page, so Chrome's extension error
- *     collector does NOT attribute the page's console noise to us.
- *  2. Called directly by injected.content.ts (MAIN-world content script)
- *     as a fallback for pages whose CSP blocks inline scripts.
+ * It is installed by being called directly from injected.content.ts, a
+ * world:'MAIN' content script that WXT registers in the manifest. Running in
+ * the MAIN world lets the hook wrap the page's own console / fetch / XHR; the
+ * `__contextGrabber` guard ensures it installs exactly once per frame.
  *
- * The `__contextGrabber` guard ensures exactly one of the two installs.
- * IMPORTANT: keep this function fully self-contained – no imports, no
- * closure variables – or the serialized copy will break.
+ * IMPORTANT: keep this function fully self-contained – no imports, no closure
+ * variables – so it stays trivial to reason about and safe to run in any frame.
  */
 export function cgPageHook() {
   const w = window as typeof window & { __contextGrabber?: boolean };

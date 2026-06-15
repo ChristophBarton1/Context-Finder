@@ -18,6 +18,7 @@
   --danger: #d92d20;
   --danger-soft: rgba(217, 45, 32, 0.07);
   --ok: #12915e;
+  --accent-ink: #02050a;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -49,6 +50,7 @@
   --color-ink-3: var(--text-3);
   --color-accent: var(--accent);
   --color-accent-soft: var(--accent-soft);
+  --color-accent-ink: var(--accent-ink);
   --color-danger: var(--danger);
   --color-danger-soft: var(--danger-soft);
   --color-ok: var(--ok);
@@ -61,4 +63,75 @@ body {
   color: var(--text);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
+}
+
+/* ------------------------------------------------------------------ *
+ * Solflare-style design system (install + uninstall pages)
+ * Dark near-black canvas, ochre-yellow accent, one clean grotesque,
+ * pill buttons + large radii. Tokens taken from solflare.com's own CSS.
+ * Font bundled locally so the extension stays 100% local; Space Grotesk
+ * is the closest free relative to their FK Grotesk (same designer).
+ * ------------------------------------------------------------------ */
+@font-face {
+  font-family: 'Space Grotesk';
+  font-style: normal;
+  font-weight: 300 700;
+  font-display: swap;
+  src: url('/fonts/space-grotesk.woff2') format('woff2');
+}
+
+/* Scoped palette override — only elements under .cg-brand change, so the
+ * popup keeps its original look untouched. */
+.cg-brand {
+  --bg: #02050a;
+  --surface: #0c0f14;
+  --surface-2: #14161b;
+  --border: #24262b;
+  --border-strong: #45474d;
+  --text: #f5f8ff;
+  --text-2: #c1c4ce;
+  --text-3: #898a93;
+  --accent: #f5f8ff;
+  --accent-soft: rgba(245, 248, 255, 0.1);
+  --accent-ink: #02050a;
+  --danger: #ff4b3f;
+  --danger-soft: rgba(255, 75, 63, 0.13);
+  --ok: #71cc49;
+
+  --ease-sf: cubic-bezier(0.16, 0.84, 0.44, 1);
+
+  --font-sans: 'Space Grotesk', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-display: 'Space Grotesk', system-ui, sans-serif;
+
+  background: var(--bg);
+  color: var(--text);
+}
+
+.font-display {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.0;
+}
+
+/* Inverted chip — monochrome highlight: white block, dark ink. */
+.cg-mark {
+  background: var(--accent);
+  color: var(--accent-ink);
+  padding: 0 0.22em;
+  border-radius: 8px;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+/* Entrance animation (matches Solflare's fade-up + smooth easing). */
+@keyframes cg-rise {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.cg-rise {
+  animation: cg-rise 0.7s var(--ease-sf) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .cg-rise { animation: none; }
 }

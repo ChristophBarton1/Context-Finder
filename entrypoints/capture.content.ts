@@ -1,10 +1,10 @@
 import type { CaptureStore, PickedElement } from '@/utils/types';
 
 /**
- * Isolated-world companion to the MAIN-world page hook.
- * Injects the hook as an anonymous inline script (preferred install path),
+ * Isolated-world companion to the MAIN-world page hook. The hook itself is
+ * installed by injected.content.ts (a world:'MAIN' content script); this file
  * receives the captured data via postMessage, answers the popup's requests,
- * keeps the badge counter updated and implements the element picker.
+ * keeps the badge counter updated and implements the element/area picker.
  */
 export default defineContentScript({
   matches: ['<all_urls>'],

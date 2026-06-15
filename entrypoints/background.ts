@@ -80,4 +80,11 @@ export default defineBackground(() => {
       browser.tabs.create({ url: browser.runtime.getURL('/onboarding.html') });
     }
   });
+
+  // Branded farewell page on uninstall. Chrome only accepts an http(s) URL
+  // here (a local extension page is not allowed), so this points at the hosted
+  // copy of site/uninstall.html. Change this URL to wherever you host it.
+  browser.runtime
+    .setUninstallURL('https://christophbarton1.github.io/Context-Finder/uninstall.html')
+    .catch(() => {});
 });
