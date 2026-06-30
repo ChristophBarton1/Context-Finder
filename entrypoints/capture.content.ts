@@ -1,5 +1,6 @@
 import type { CaptureStore, PickedElement } from '@/utils/types';
 import { isNoiseMessage } from '@/utils/trackers';
+import { injectText } from '@/utils/composer-inject';
 
 /**
  * Isolated-world companion to the MAIN-world page hook. The hook itself is
@@ -86,10 +87,13 @@ export default defineContentScript({
       return found;
     };
 
-    browser.runtime.onMessage.addListener((msg: { type?: string }) => {
+    browser.runtime.onMessage.addListener((msg: { type?: string; text?: string }) => {
       // Only the top frame answers the popup – child frames stay silent so
       // their (empty) responses never win the race.
       if (!isTop) return undefined;
+      if (msg?.type === 'cg:injectComposer' && typeof msg.text === 'string') {
+        return Promise.resolve({ result: injectText(msg.text) });
+      }
       if (msg?.type === 'cg:getData') {
         const frames = [...frameStores.entries()];
         const frameLabel = (href: string) => {
