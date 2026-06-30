@@ -1,7 +1,7 @@
 import type { CaptureData, NetworkEntry, PickedElement } from './types';
 import { FREE_NETWORK_LIMIT } from './types';
 import { redact } from './redact';
-import { isTracker } from './trackers';
+import { isTracker, isNoiseMessage } from './trackers';
 
 export interface ReportOptions {
   data: CaptureData;
@@ -31,6 +31,7 @@ export function groupErrors(
 ): { level: string; message: string; count: number }[] {
   const map = new Map<string, { level: string; message: string; count: number }>();
   for (const e of errors) {
+    if (isNoiseMessage(e.message)) continue;
     const key = `${e.level}|${e.message}`;
     const g = map.get(key);
     if (g) g.count += 1;
@@ -43,6 +44,7 @@ export function groupErrors(
 export function detectIssueTags(data: CaptureData): string[] {
   const tags = new Set<string>();
   for (const e of data.errors) {
+    if (isNoiseMessage(e.message)) continue;
     if (/content security policy|csp/i.test(e.message)) tags.add('CSP');
     if (/cors|cross-origin/i.test(e.message)) tags.add('CORS');
     if (e.level === 'uncaught' || /typeerror|referenceerror/i.test(e.message))
@@ -88,10 +90,13 @@ export function buildReport(opts: ReportOptions): { text: string; redactedCount:
   }
   lines.push('');
 
-  if (data.errors.length > 0) {
-    const grouped = groupErrors(data.errors);
-    const uniqueNote = grouped.length !== data.errors.length ? `, ${grouped.length} unique` : '';
-    lines.push(`## Console errors (${data.errors.length}${uniqueNote})`);
+  const realErrors = data.errors.filter((e) => !isNoiseMessage(e.message));
+  const noiseCount = data.errors.length - realErrors.length;
+
+  if (realErrors.length > 0) {
+    const grouped = groupErrors(realErrors);
+    const uniqueNote = grouped.length !== realErrors.length ? `, ${grouped.length} unique` : '';
+    lines.push(`## Console errors (${realErrors.length}${uniqueNote})`);
     lines.push('');
     lines.push('```');
     for (const e of grouped) {
@@ -103,6 +108,12 @@ export function buildReport(opts: ReportOptions): { text: string; redactedCount:
     lines.push('## Console errors');
     lines.push('');
     lines.push('_No console errors were captured on this page._');
+    lines.push('');
+  }
+  if (noiseCount > 0) {
+    lines.push(
+      `_${noiseCount} ad/analytics console ${noiseCount === 1 ? 'message' : 'messages'} ignored (harmless)._`
+    );
     lines.push('');
   }
 

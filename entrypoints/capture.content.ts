@@ -1,4 +1,5 @@
 import type { CaptureStore, PickedElement } from '@/utils/types';
+import { isNoiseMessage } from '@/utils/trackers';
 
 /**
  * Isolated-world companion to the MAIN-world page hook. The hook itself is
@@ -23,9 +24,11 @@ export default defineContentScript({
     let store: CaptureStore = { errors: [], network: [] };
     const frameStores = new Map<string, CaptureStore>();
 
+    const realCount = (s: CaptureStore) =>
+      s.errors.filter((e) => !isNoiseMessage(e.message)).length;
     const totalErrors = () =>
-      store.errors.length +
-      [...frameStores.values()].reduce((n, s) => n + s.errors.length, 0);
+      realCount(store) +
+      [...frameStores.values()].reduce((n, s) => n + realCount(s), 0);
 
     let lastBadge = -1;
     const sendCounts = () => {

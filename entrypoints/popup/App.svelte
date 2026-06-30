@@ -6,7 +6,7 @@
   import { EXPORT_TARGETS, MAX_PREFILL_URL, buildExport } from '@/utils/export-targets';
   import { LICENSE_STORAGE_KEY, isProKey, normalizeKey } from '@/utils/license';
   import { TARGET_ICONS, STACK_ICONS, type BrandIcon } from '@/utils/icons';
-  import { isTracker } from '@/utils/trackers';
+  import { isTracker, isNoiseMessage } from '@/utils/trackers';
 
   type ViewState = 'loading' | 'ready' | 'unavailable' | 'needsreload';
   type Tab = 'export' | 'report' | 'screenshot' | 'element' | 'network';
@@ -47,7 +47,9 @@
 
   const target = $derived(EXPORT_TARGETS.find((t) => t.id === targetId) ?? EXPORT_TARGETS[0]);
   const picksLeft = $derived(pro ? 999 : Math.max(0, FREE_PICKS_PER_DAY - picksUsedToday));
-  const errorCount = $derived(data?.errors.length ?? 0);
+  const errorCount = $derived(
+    (data?.errors ?? []).filter((e) => !isNoiseMessage(e.message)).length
+  );
   const groupedErrors = $derived(groupErrors(data?.errors ?? []));
   const failures = $derived((data?.network ?? []).filter((n) => !isTracker(n.url)));
   const trackers = $derived((data?.network ?? []).filter((n) => isTracker(n.url)));

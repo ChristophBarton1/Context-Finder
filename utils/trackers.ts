@@ -63,3 +63,14 @@ export function isTracker(url: string | undefined): boolean {
     return host === t || host.endsWith('.' + t);
   });
 }
+
+/**
+ * Console warnings logged by ad/analytics libraries themselves (e.g. Google
+ * Publisher Tag's own deprecation notices). They fire on any ad-supported
+ * page regardless of what the user built – never the user's own bug.
+ */
+const NOISE_MESSAGE_PATTERNS = [/^\[GPT\]/i];
+
+export function isNoiseMessage(message: string): boolean {
+  return NOISE_MESSAGE_PATTERNS.some((p) => p.test(message));
+}
