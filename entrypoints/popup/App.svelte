@@ -417,8 +417,8 @@
 
 {#snippet brandIcon(icon: BrandIcon | undefined, size: number)}
   {#if icon?.path}
-    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" class="shrink-0">
-      <path d={icon.path} fill={icon.color ?? 'currentColor'} />
+    <svg width={size} height={size} viewBox={icon.viewBox ?? '0 0 24 24'} aria-hidden="true" class="shrink-0">
+      <path d={icon.path} fill={icon.color ?? 'currentColor'} fill-rule={icon.fillRule ?? 'nonzero'} clip-rule={icon.fillRule ?? 'nonzero'} />
     </svg>
   {:else if icon?.monogram}
     <span
