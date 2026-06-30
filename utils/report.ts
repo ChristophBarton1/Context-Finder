@@ -2,7 +2,7 @@ import type { CaptureData, ConsoleEntry, NetworkEntry, PickedElement } from './t
 import { FREE_NETWORK_LIMIT } from './types';
 import { redact } from './redact';
 import { isTracker, isNoiseMessage } from './trackers';
-import { isBuilderHost, hostOf, builderLabel } from './builders';
+import { isBuilderHost, hostOf, builderLabel, isEditorOrigin } from './builders';
 
 export interface ReportOptions {
   data: CaptureData;
@@ -135,9 +135,9 @@ export function buildReport(opts: ReportOptions): { text: string; redactedCount:
   // On a builder, an entry from the builder's own top-frame host is editor
   // shell background; iframe entries (the user's app) and everything on
   // non-builder pages are "primary". Missing origin → treated as primary
-  // (fail toward showing, never hiding).
-  const isEditor = (origin?: string) =>
-    onBuilder && !!origin && origin === pageHostName;
+  // (fail toward showing, never hiding). Shared predicate so the report,
+  // popup, and Pro exports can never disagree.
+  const isEditor = (origin?: string) => isEditorOrigin(data.page.url, origin);
 
   // Non-builder pages: annotate iframe entries with their origin at render
   // time (this used to be baked into the message by the capture layer).

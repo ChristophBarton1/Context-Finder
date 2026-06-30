@@ -7,7 +7,7 @@
   import { LICENSE_STORAGE_KEY, isProKey, normalizeKey } from '@/utils/license';
   import { TARGET_ICONS, STACK_ICONS, type BrandIcon } from '@/utils/icons';
   import { isTracker, isNoiseMessage } from '@/utils/trackers';
-  import { isBuilderHost, hostOf } from '@/utils/builders';
+  import { isBuilderHost, hostOf, isEditorOrigin } from '@/utils/builders';
 
   type ViewState = 'loading' | 'ready' | 'unavailable' | 'needsreload';
   type Tab = 'export' | 'report' | 'screenshot' | 'element' | 'network';
@@ -51,8 +51,7 @@
   const picksLeft = $derived(pro ? 999 : Math.max(0, FREE_PICKS_PER_DAY - picksUsedToday));
   const pageHostName = $derived(hostOf(data?.page.url));
   const onBuilder = $derived(isBuilderHost(pageHostName));
-  const isEditorEntry = (origin?: string) =>
-    onBuilder && !!origin && origin === pageHostName;
+  const isEditorEntry = (origin?: string) => isEditorOrigin(data?.page.url, origin);
   // App-scoped sets: on a builder, drop the editor shell's top-frame entries
   // so counts reflect the user's app, not the tool's own background activity.
   const appErrors = $derived((data?.errors ?? []).filter((e) => !isEditorEntry(e.origin)));

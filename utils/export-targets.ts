@@ -2,6 +2,7 @@ import type { ReportOptions } from './report';
 import { buildReport, detectIssueTags, groupErrors } from './report';
 import { redact } from './redact';
 import { isTracker } from './trackers';
+import { isEditorOrigin } from './builders';
 
 /**
  * Export targets for the "Send to …" dropdown. Each target tunes the
@@ -143,9 +144,13 @@ function pageHost(url: string): string {
 /** Plain-English, non-technical summary a freelancer can send to a client. */
 function buildClientSummary(opts: ReportOptions): { text: string; redactedCount: number } {
   const { data, expectation } = opts;
-  const failures = data.network.filter((n) => !isTracker(n.url));
-  const errors = groupErrors(data.errors);
-  const tags = detectIssueTags(data);
+  // On a builder, count only the user's app (iframe) — never the builder's
+  // editor-shell noise, which would otherwise read as "errors in the code".
+  const appErrors = data.errors.filter((e) => !isEditorOrigin(data.page.url, e.origin));
+  const appNetwork = data.network.filter((n) => !isEditorOrigin(data.page.url, n.origin));
+  const failures = appNetwork.filter((n) => !isTracker(n.url));
+  const errors = groupErrors(appErrors);
+  const tags = detectIssueTags({ ...data, errors: appErrors, network: appNetwork });
   const lines: string[] = [];
 
   lines.push(`Quick technical check of ${pageHost(data.page.url)}`);
@@ -187,9 +192,13 @@ function buildClientSummary(opts: ReportOptions): { text: string; redactedCount:
 /** Short technical hand-off for a teammate – context, not prose. */
 function buildDeveloperHandoff(opts: ReportOptions): { text: string; redactedCount: number } {
   const { data, picked, expectation } = opts;
-  const failures = data.network.filter((n) => !isTracker(n.url));
-  const errors = groupErrors(data.errors);
-  const tags = detectIssueTags(data);
+  // On a builder, scope to the user's app (iframe); the builder's editor-shell
+  // errors/requests are not the bug being handed off.
+  const appErrors = data.errors.filter((e) => !isEditorOrigin(data.page.url, e.origin));
+  const appNetwork = data.network.filter((n) => !isEditorOrigin(data.page.url, n.origin));
+  const failures = appNetwork.filter((n) => !isTracker(n.url));
+  const errors = groupErrors(appErrors);
+  const tags = detectIssueTags({ ...data, errors: appErrors, network: appNetwork });
   const lines: string[] = [];
 
   lines.push('## Bug context');

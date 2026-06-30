@@ -37,3 +37,18 @@ export function builderLabel(host: string | undefined): string {
   if (!host) return 'the builder';
   return BUILDER_HOST_PATTERNS.find((b) => b.pattern.test(host))?.label ?? 'the builder';
 }
+
+/**
+ * On a builder page, is this entry's frame `origin` the builder's own editor
+ * shell (the top frame) rather than the user's app (a child iframe)? Off a
+ * builder, always false. `pageUrl` is the top-frame document URL. This is the
+ * single source of the app-vs-editor split used by the report, the popup, and
+ * the Pro exports — call it everywhere so the three can never disagree.
+ */
+export function isEditorOrigin(
+  pageUrl: string | undefined,
+  origin: string | undefined
+): boolean {
+  const host = hostOf(pageUrl);
+  return isBuilderHost(host) && !!origin && origin === host;
+}
