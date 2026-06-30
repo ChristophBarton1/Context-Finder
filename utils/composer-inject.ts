@@ -75,6 +75,12 @@ function setNativeValue(el: HTMLTextAreaElement | HTMLInputElement, value: strin
   el.dispatchEvent(new Event('input', { bubbles: true }));
 }
 
+/**
+ * Caller's responsibility: only invoke this when the active tab's host
+ * matches an intended builder (the popup host-gates inject targets). This
+ * function trusts that gate — it will fill whatever single composer it finds
+ * on whatever page it runs on.
+ */
 export function injectText(text: string): 'injected' | 'not-found' {
   const el = findComposer();
   if (!el) return 'not-found';
