@@ -1,5 +1,6 @@
 import type { CaptureStore, PickedElement } from '@/utils/types';
 import { isNoiseMessage } from '@/utils/trackers';
+import { hostOf, isBuilderHost } from '@/utils/builders';
 import { injectText } from '@/utils/composer-inject';
 
 /**
@@ -27,9 +28,17 @@ export default defineContentScript({
 
     const realCount = (s: CaptureStore) =>
       s.errors.filter((e) => !isNoiseMessage(e.message)).length;
-    const totalErrors = () =>
-      realCount(store) +
-      [...frameStores.values()].reduce((n, s) => n + realCount(s), 0);
+    const onBuilder = isBuilderHost(hostOf(location.href));
+    const totalErrors = () => {
+      const frameErrors = [...frameStores.values()].reduce(
+        (n, s) => n + realCount(s),
+        0
+      );
+      // On a builder, the top frame is the editor shell — its errors aren't
+      // the user's app bug, so they don't drive the badge. Off a builder,
+      // count everything (unchanged behavior).
+      return onBuilder ? frameErrors : realCount(store) + frameErrors;
+    };
 
     let lastBadge = -1;
     const sendCounts = () => {
@@ -96,24 +105,20 @@ export default defineContentScript({
       }
       if (msg?.type === 'cg:getData') {
         const frames = [...frameStores.entries()];
-        const frameLabel = (href: string) => {
-          try {
-            return new URL(href).host || href.slice(0, 60);
-          } catch {
-            return href.slice(0, 60);
-          }
-        };
+        const topHost = hostOf(location.href);
         return Promise.resolve({
           errors: [
-            ...store.errors,
+            ...store.errors.map((err) => ({ ...err, origin: topHost })),
             ...frames.flatMap(([href, s]) =>
-              s.errors.map((err) => ({
-                ...err,
-                message: `${err.message} [in iframe: ${frameLabel(href)}]`,
-              }))
+              s.errors.map((err) => ({ ...err, origin: hostOf(href) }))
             ),
           ],
-          network: [...store.network, ...frames.flatMap(([, s]) => s.network)],
+          network: [
+            ...store.network.map((n) => ({ ...n, origin: topHost })),
+            ...frames.flatMap(([href, s]) =>
+              s.network.map((n) => ({ ...n, origin: hostOf(href) }))
+            ),
+          ],
           page: {
             url: location.href,
             title: document.title,
