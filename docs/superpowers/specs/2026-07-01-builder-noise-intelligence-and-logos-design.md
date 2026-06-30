@@ -261,20 +261,22 @@ both the badge and the report automatically.
 ### C1. Extend `BrandIcon` — `utils/icons.ts`
 
 The current `BrandIcon` supports a single 24×24 `path`, a `color`, or a text
-`monogram`. Real brand logos sometimes need a different viewBox or multiple
-shapes/colors. Extend the type minimally:
+`monogram`. The four real logos we sourced (OpenAI blossom, Lovable
+silhouette, Bolt "b" glyph, Base44 mark) all turned out to be **single-path**
+marks — so we don't need a raw-SVG field, only a `viewBox` override and a
+`fillRule` (Bolt's glyph has a counter that needs `evenodd` or it fills
+solid):
 
 ```ts
 export interface BrandIcon {
-  /** Single SVG path (rendered in viewBox 0 0 24 24 unless viewBox is set). */
+  /** SVG path (24×24 viewBox unless `viewBox` overrides). */
   path?: string;
-  /** Override viewBox for path-based icons whose source isn't 24×24. */
+  /** viewBox override for paths whose source isn't 24×24. */
   viewBox?: string;
-  /** Full inner SVG markup for logos that aren't a single path (multi-shape
-   *  or multi-color brand marks). Rendered inside an <svg> with viewBox. */
-  svg?: string;
-  /** Fill color for `path`; omitted = currentColor (adapts to theme). */
+  /** Fill color; omitted = currentColor (adapts to theme). */
   color?: string;
+  /** 'evenodd' for paths with counters/holes; default nonzero. */
+  fillRule?: 'evenodd' | 'nonzero';
   /** Last-resort text mark when no real logo is available. */
   monogram?: string;
 }
