@@ -74,7 +74,7 @@ export const TARGET_ICONS: Record<string, BrandIcon> = {
   bolt: { monogram: 'B' },
   replit: icon(siReplit),
   v0: icon(siV0),
-  base44: { monogram: '44' },
+  base44: { monogram: '44' }, // not 'B' – would collide with bolt's monogram above
   client: { monogram: '@' },
   developer: { monogram: '</>' },
 };
