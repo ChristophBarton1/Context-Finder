@@ -14,6 +14,8 @@ import {
   siX,
   siCursor,
   siWindsurf,
+  siReplit,
+  siV0,
   siWordpress,
   siElementor,
   siWoocommerce,
@@ -64,6 +66,15 @@ export const TARGET_ICONS: Record<string, BrandIcon> = {
   gemini: icon(siGooglegemini),
   grok: icon(siX),
   github: icon(siGithub),
+  // Lovable and Base44 have no official simple-icons entry; Bolt's actual
+  // brand mark is distinct from StackBlitz's (its parent company) and using
+  // StackBlitz's logo here would misrepresent it. Same "no fake icon"
+  // reasoning as chatgpt/codex-cli above.
+  lovable: { monogram: 'L' },
+  bolt: { monogram: 'B' },
+  replit: icon(siReplit),
+  v0: icon(siV0),
+  base44: { monogram: '44' },
   client: { monogram: '@' },
   developer: { monogram: '</>' },
 };
