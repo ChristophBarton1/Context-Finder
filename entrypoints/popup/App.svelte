@@ -16,6 +16,7 @@
   let picked = $state<PickedElement | null>(null);
   let expectation = $state('');
   let copyState: 'idle' | 'busy' | 'done' = $state('idle');
+  let injectResult: 'idle' | 'injected' | 'not-found' = $state('idle');
   let photoState: 'idle' | 'done' = $state('idle');
   let picksUsedToday = $state(0);
   let activeTab: Tab = $state('export');
@@ -149,24 +150,40 @@
         ) {
           targetId = saved;
         } else {
+          let matched = false;
           try {
-            const tabs = await browser.tabs.query({ currentWindow: true });
+            const activeHost = new URL(pageUrl).host;
             for (const t of EXPORT_TARGETS) {
-              if (!t.hostPattern || (t.pro && !pro)) continue;
-              const open = tabs.some((tb) => {
-                try {
-                  return t.hostPattern!.test(new URL(tb.url ?? '').host);
-                } catch {
-                  return false;
-                }
-              });
-              if (open) {
+              if (!t.inject || !t.hostPattern) continue;
+              if (t.hostPattern.test(activeHost)) {
                 targetId = t.id;
+                matched = true;
                 break;
               }
             }
           } catch {
-            /* tab detection is optional */
+            /* malformed pageUrl is fine to skip */
+          }
+          if (!matched) {
+            try {
+              const tabs = await browser.tabs.query({ currentWindow: true });
+              for (const t of EXPORT_TARGETS) {
+                if (!t.hostPattern || t.inject || (t.pro && !pro)) continue;
+                const open = tabs.some((tb) => {
+                  try {
+                    return t.hostPattern!.test(new URL(tb.url ?? '').host);
+                  } catch {
+                    return false;
+                  }
+                });
+                if (open) {
+                  targetId = t.id;
+                  break;
+                }
+              }
+            } catch {
+              /* tab detection is optional */
+            }
           }
         }
 
@@ -201,9 +218,43 @@
     }
   }
 
+  function recordHistory() {
+    if (!data || !preview) return;
+    const entry: HistoryEntry = {
+      host: pageDisplay(data.page.url),
+      time: Date.now(),
+      problems: problemCount,
+      target: target.label,
+      text: preview.text,
+    };
+    history = [entry, ...history.filter((h) => !(h.host === entry.host && h.target === entry.target))].slice(0, 15);
+    browser.storage.local.set({ 'cg:history': $state.snapshot(history) }).catch(() => {});
+  }
+
   async function copyReport() {
     if (!preview || copyState === 'busy') return;
     copyState = 'busy';
+    injectResult = 'idle';
+
+    if (target.inject && tabId != null) {
+      try {
+        const res = (await browser.tabs.sendMessage(tabId, {
+          type: 'cg:injectComposer',
+          text: preview.text,
+        })) as { result: 'injected' | 'not-found' } | undefined;
+        injectResult = res?.result ?? 'not-found';
+      } catch {
+        injectResult = 'not-found';
+      }
+      if (injectResult === 'injected') {
+        copyState = 'done';
+        recordHistory();
+        setTimeout(() => (copyState = 'idle'), 2600);
+        return;
+      }
+      // composer not found – fall through to the clipboard fallback below
+    }
+
     let ok = true;
     try {
       await navigator.clipboard.writeText(preview.text);
@@ -212,18 +263,7 @@
     }
     copyState = ok ? 'done' : 'idle';
     if (!ok) return;
-    // Remember this report locally (last 15) so it can be re-copied later.
-    if (data) {
-      const entry: HistoryEntry = {
-        host: pageDisplay(data.page.url),
-        time: Date.now(),
-        problems: problemCount,
-        target: target.label,
-        text: preview.text,
-      };
-      history = [entry, ...history.filter((h) => !(h.host === entry.host && h.target === entry.target))].slice(0, 15);
-      browser.storage.local.set({ 'cg:history': $state.snapshot(history) }).catch(() => {});
-    }
+    recordHistory();
     if (target.openUrl) {
       const prefillUrl = target.prefill?.(preview.text);
       const url = prefillUrl && prefillUrl.length <= MAX_PREFILL_URL ? prefillUrl : target.openUrl;
@@ -655,7 +695,7 @@
                 <rect x="9" y="9" width="11" height="11" rx="2" stroke="currentColor" stroke-width="2" />
                 <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" stroke="currentColor" stroke-width="2" />
               </svg>
-              {target.openUrl ? `Send to ${target.label}` : `Copy for ${target.label}`}
+              {target.inject || target.openUrl ? `Send to ${target.label}` : `Copy for ${target.label}`}
             {/if}
           </button>
 
@@ -713,13 +753,19 @@
 
         <p class="-mt-1 text-center text-[10.5px] leading-relaxed text-ink-3">
           {#if copyState === 'done'}
-            {#if target.prefill}
+            {#if target.inject && injectResult === 'injected'}
+              Sent to {target.label} — press Enter there to submit
+            {:else if target.inject && injectResult === 'not-found'}
+              Couldn't find {target.label}'s chat box — copied instead, paste with Ctrl+V
+            {:else if target.prefill}
               {target.label} opened — your report is already in the chat
             {:else if target.openUrl}
               {target.label} opened — paste with Ctrl+V
             {:else}
               Copied — paste it into {target.label}
             {/if}
+          {:else if target.inject}
+            Fills {target.label}'s chat box directly — review and press Enter.
           {:else if target.prefill}
             Opens {target.label} with the report already in the chat.
           {:else if target.openUrl}
