@@ -754,7 +754,7 @@
         <p class="-mt-1 text-center text-[10.5px] leading-relaxed text-ink-3">
           {#if copyState === 'done'}
             {#if target.inject && injectResult === 'injected'}
-              Sent to {target.label} — press Enter there to submit
+              Added to {target.label}'s chat — review it and hit send
             {:else if target.inject && injectResult === 'not-found'}
               Couldn't find {target.label}'s chat box — copied instead, paste with Ctrl+V
             {:else if target.prefill}
@@ -765,7 +765,7 @@
               Copied — paste it into {target.label}
             {/if}
           {:else if target.inject}
-            Fills {target.label}'s chat box directly — review and press Enter.
+            Fills {target.label}'s chat box directly — review it and hit send.
           {:else if target.prefill}
             Opens {target.label} with the report already in the chat.
           {:else if target.openUrl}
