@@ -23,6 +23,12 @@ export interface ExportTarget {
   prefill?: (text: string) => string;
   /** Detects an open tab of this AI tool to preselect the target. */
   hostPattern?: RegExp;
+  /**
+   * AI app-builder targets (Lovable, Bolt, …): instead of opening a tab,
+   * fill the chat composer already on the active tab via composer-inject.ts.
+   * Only meaningful when hostPattern matches the ACTIVE tab specifically.
+   */
+  inject?: boolean;
   task?: string;
 }
 
@@ -33,6 +39,10 @@ const CODEBASE_TASK =
   'I am working in my local codebase. Use the browser debug context above to locate the likely ' +
   'source file or component, then propose the smallest safe fix. Explain which file needs changes ' +
   'and what to test afterwards.';
+
+const BUILDER_TASK =
+  'You are building this app in this chat. Use the browser debug context above to find the cause ' +
+  'and fix it directly in your next response.';
 
 export const EXPORT_TARGETS: ExportTarget[] = [
   {
@@ -69,6 +79,46 @@ export const EXPORT_TARGETS: ExportTarget[] = [
     openUrl: 'https://grok.com/',
     prefill: (t) => `https://grok.com/?q=${encodeURIComponent(t)}`,
     hostPattern: /(^|\.)grok\.com$/,
+  },
+  {
+    id: 'lovable',
+    label: 'Lovable',
+    pro: false,
+    inject: true,
+    hostPattern: /(^|\.)lovable\.dev$/,
+    task: BUILDER_TASK,
+  },
+  {
+    id: 'bolt',
+    label: 'Bolt',
+    pro: false,
+    inject: true,
+    hostPattern: /(^|\.)bolt\.new$/,
+    task: BUILDER_TASK,
+  },
+  {
+    id: 'replit',
+    label: 'Replit',
+    pro: false,
+    inject: true,
+    hostPattern: /(^|\.)replit\.com$/,
+    task: BUILDER_TASK,
+  },
+  {
+    id: 'v0',
+    label: 'v0',
+    pro: false,
+    inject: true,
+    hostPattern: /(^|\.)v0\.app$/,
+    task: BUILDER_TASK,
+  },
+  {
+    id: 'base44',
+    label: 'Base44',
+    pro: false,
+    inject: true,
+    hostPattern: /(^|\.)base44\.com$/,
+    task: BUILDER_TASK,
   },
   {
     id: 'github',
