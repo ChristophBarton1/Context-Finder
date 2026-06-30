@@ -2,6 +2,8 @@ export interface ConsoleEntry {
   level: string;
   message: string;
   time: string;
+  /** Host of the frame this came from (top frame, or a child iframe). */
+  origin?: string;
 }
 
 export interface NetworkEntry {
@@ -12,6 +14,8 @@ export interface NetworkEntry {
   /** First bytes of the failed response body (Pro: response inspector). */
   body?: string;
   time: string;
+  /** Host of the frame that issued the request. */
+  origin?: string;
 }
 
 export interface CaptureStore {
