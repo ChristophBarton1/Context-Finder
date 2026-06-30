@@ -195,6 +195,19 @@ export function buildReport(opts: ReportOptions): { text: string; redactedCount:
     onBuilder ? 'Console errors in your app' : 'Console errors',
     onBuilder ? 'No errors in your app right now.' : 'No console errors were captured on this page.'
   );
+
+  // Harmless ad/framework noise filtered out of the section above. App-scoped
+  // (a builder's own editor noise doesn't inflate the count); on a normal page
+  // this is every captured noise message, matching the original behavior and
+  // its position right after the console section.
+  const appNoiseCount = appErrors.filter((e) => isNoiseMessage(e.message)).length;
+  if (appNoiseCount > 0) {
+    lines.push(
+      `_${appNoiseCount} ad/analytics console ${appNoiseCount === 1 ? 'message' : 'messages'} ignored (harmless)._`
+    );
+    lines.push('');
+  }
+
   pushNetworkSection(
     lines,
     appFailures,
@@ -215,20 +228,24 @@ export function buildReport(opts: ReportOptions): { text: string; redactedCount:
   }
 
   // --- Builder editor background (demoted) ---
-  if (onBuilder && (editorErrors.length > 0 || editorFailures.length > 0)) {
-    const grouped = groupErrors(editorErrors);
+  // Editor-origin trackers are intentionally dropped entirely (a builder's own
+  // analytics calls are pure noise, not worth even a demoted listing). Gate on
+  // the post-noise-filter group count so an all-noise editor never opens an
+  // empty section.
+  const editorGrouped = groupErrors(editorErrors);
+  if (onBuilder && (editorGrouped.length > 0 || editorFailures.length > 0)) {
     lines.push(`## ${builderName} editor background (usually safe to ignore)`);
     lines.push('');
     lines.push(
       `_These come from the ${builderName} editor itself, not from your app. Listed for completeness._`
     );
     lines.push('');
-    if (grouped.length > 0) {
+    if (editorGrouped.length > 0) {
       lines.push('```');
-      for (const e of grouped.slice(0, 3)) {
+      for (const e of editorGrouped.slice(0, 3)) {
         lines.push(`[${e.level}] ${e.message}${e.count > 1 ? `  (×${e.count})` : ''}`);
       }
-      if (grouped.length > 3) lines.push(`…and ${grouped.length - 3} more`);
+      if (editorGrouped.length > 3) lines.push(`…and ${editorGrouped.length - 3} more`);
       lines.push('```');
     }
     for (const n of editorFailures.slice(0, 3)) {
@@ -236,15 +253,6 @@ export function buildReport(opts: ReportOptions): { text: string; redactedCount:
       lines.push(`- \`${n.method ?? 'GET'}\` ${n.url ?? '(unknown url)'} → **${status}**`);
     }
     if (editorFailures.length > 3) lines.push(`- _…and ${editorFailures.length - 3} more_`);
-    lines.push('');
-  }
-
-  // Combined harmless-noise note across the whole capture.
-  const noiseCount = data.errors.filter((e) => isNoiseMessage(e.message)).length;
-  if (noiseCount > 0) {
-    lines.push(
-      `_${noiseCount} ad/analytics console ${noiseCount === 1 ? 'message' : 'messages'} ignored (harmless)._`
-    );
     lines.push('');
   }
 
