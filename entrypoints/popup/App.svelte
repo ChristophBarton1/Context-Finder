@@ -7,6 +7,7 @@
   import { LICENSE_STORAGE_KEY, isProKey, normalizeKey } from '@/utils/license';
   import { TARGET_ICONS, STACK_ICONS, type BrandIcon } from '@/utils/icons';
   import { isTracker, isNoiseMessage } from '@/utils/trackers';
+  import { isBuilderHost, hostOf } from '@/utils/builders';
 
   type ViewState = 'loading' | 'ready' | 'unavailable' | 'needsreload';
   type Tab = 'export' | 'report' | 'screenshot' | 'element' | 'network';
@@ -48,12 +49,26 @@
 
   const target = $derived(EXPORT_TARGETS.find((t) => t.id === targetId) ?? EXPORT_TARGETS[0]);
   const picksLeft = $derived(pro ? 999 : Math.max(0, FREE_PICKS_PER_DAY - picksUsedToday));
-  const errorCount = $derived(
-    (data?.errors ?? []).filter((e) => !isNoiseMessage(e.message)).length
+  const pageHostName = $derived(hostOf(data?.page.url));
+  const onBuilder = $derived(isBuilderHost(pageHostName));
+  const isEditorEntry = (origin?: string) =>
+    onBuilder && !!origin && origin === pageHostName;
+  // App-scoped sets: on a builder, drop the editor shell's top-frame entries
+  // so counts reflect the user's app, not the tool's own background activity.
+  const appErrors = $derived((data?.errors ?? []).filter((e) => !isEditorEntry(e.origin)));
+  const appNetwork = $derived((data?.network ?? []).filter((n) => !isEditorEntry(n.origin)));
+  const editorProblemCount = $derived(
+    onBuilder
+      ? (data?.errors ?? []).filter((e) => isEditorEntry(e.origin) && !isNoiseMessage(e.message)).length +
+          (data?.network ?? []).filter((n) => isEditorEntry(n.origin) && !isTracker(n.url)).length
+      : 0
   );
-  const groupedErrors = $derived(groupErrors(data?.errors ?? []));
-  const failures = $derived((data?.network ?? []).filter((n) => !isTracker(n.url)));
-  const trackers = $derived((data?.network ?? []).filter((n) => isTracker(n.url)));
+  const errorCount = $derived(
+    appErrors.filter((e) => !isNoiseMessage(e.message)).length
+  );
+  const groupedErrors = $derived(groupErrors(appErrors));
+  const failures = $derived(appNetwork.filter((n) => !isTracker(n.url)));
+  const trackers = $derived(appNetwork.filter((n) => isTracker(n.url)));
   const isCsp = (s?: string) => /content security policy/i.test(s ?? '');
   const cspCount = $derived(
     failures.filter((n) => isCsp(n.statusText)).length +
@@ -61,7 +76,9 @@
   );
   const netFailCount = $derived(failures.filter((n) => !isCsp(n.statusText)).length);
   const problemCount = $derived(errorCount + failures.length);
-  const tags = $derived(data ? detectIssueTags(data) : []);
+  const tags = $derived(
+    data ? detectIssueTags({ ...data, errors: appErrors, network: appNetwork }) : []
+  );
   const stack = $derived(data?.page.stack ?? []);
   const preview = $derived(data ? buildExport(targetId, { data, picked, expectation, pro }) : null);
   const redactedCount = $derived(preview?.redactedCount ?? 0);
@@ -965,6 +982,11 @@
       {:else if activeTab === 'network'}
         <!-- Network -->
         <div class="overflow-hidden rounded-xl border border-line bg-surface">
+          {#if onBuilder && editorProblemCount > 0}
+            <p class="border-b border-line px-4 py-2 text-[10.5px] text-ink-3">
+              {editorProblemCount} more from the builder's editor — hidden as background noise.
+            </p>
+          {/if}
           {#if failures.length === 0 && trackers.length === 0}
             <p class="px-4 py-6 text-center text-[12px] text-ink-3">No failed requests on this page.</p>
           {:else}
