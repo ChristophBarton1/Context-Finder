@@ -69,7 +69,12 @@ export function isTracker(url: string | undefined): boolean {
  * Publisher Tag's own deprecation notices). They fire on any ad-supported
  * page regardless of what the user built – never the user's own bug.
  */
-const NOISE_MESSAGE_PATTERNS = [/^\[GPT\]/i];
+const NOISE_MESSAGE_PATTERNS = [
+  /^\s*%?c?\s*\[GPT\]/i, // Google Publisher Tag's own deprecation notices
+  /ResizeObserver loop/i, // benign; browsers fire it on ordinary layout churn
+  /React Router Future Flag Warning/i, // v6→v7 opt-in notice, not an error
+  /\bRS SDK\b/, // RudderStack analytics SDK chatter
+];
 
 export function isNoiseMessage(message: string): boolean {
   return NOISE_MESSAGE_PATTERNS.some((p) => p.test(message));
