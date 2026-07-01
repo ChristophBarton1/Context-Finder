@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Privacy Policy — Context Grabber</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #02050a;
+        --surface: #0c0f14;
+        --border: #24262b;
+        --border-strong: #45474d;
+        --text: #f5f8ff;
+        --text-2: #c1c4ce;
+        --text-3: #898a93;
+        --accent: #f5f8ff;
+        --accent-ink: #02050a;
+        --font: 'Space Grotesk', system-ui, -apple-system, 'Segoe UI', sans-serif;
+      }
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      html { -webkit-font-smoothing: antialiased; }
+      body {
+        background: var(--bg);
+        background-image: radial-gradient(
+          120% 70% at 50% -10%,
+          rgba(245, 248, 255, 0.06) 0%,
+          rgba(245, 248, 255, 0) 55%
+        );
+        color: var(--text);
+        font-family: var(--font);
+        line-height: 1.3;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 28px 24px 64px;
+      }
+      .wrap { width: 100%; max-width: 640px; }
+      header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding-bottom: 26px;
+        border-bottom: 1px solid var(--border);
+      }
+      .seal {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 38px;
+        height: 38px;
+        border-radius: 12px;
+        background: var(--accent);
+        color: var(--accent-ink);
+      }
+      .wordmark { font-size: 16px; font-weight: 600; letter-spacing: -0.02em; }
+      .pill {
+        margin-left: auto;
+        padding: 6px 13px;
+        border: 1px solid var(--border-strong);
+        border-radius: 100px;
+        font-size: 11px;
+        font-weight: 500;
+        color: var(--text-2);
+      }
+      .hero { padding: 52px 0 10px; }
+      .eyebrow {
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--accent);
+      }
+      h1 {
+        font-weight: 700;
+        font-size: 44px;
+        line-height: 1.05;
+        letter-spacing: -0.03em;
+        margin: 12px 0 0;
+      }
+      .lede {
+        margin: 18px 0 0;
+        font-size: 16px;
+        line-height: 1.6;
+        color: var(--text-2);
+        max-width: 520px;
+      }
+      .lede strong { color: var(--text); }
+      .updated { margin-top: 14px; font-size: 12px; color: var(--text-3); }
+
+      section.card {
+        margin-top: 28px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        padding: 22px 24px;
+      }
+      section.card h2 {
+        font-size: 15px;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+        margin-bottom: 12px;
+      }
+      section.card p, section.card li {
+        font-size: 13.5px;
+        line-height: 1.65;
+        color: var(--text-2);
+      }
+      section.card p + p { margin-top: 10px; }
+      section.card ul { margin: 8px 0 0 18px; display: flex; flex-direction: column; gap: 7px; }
+      section.card strong { color: var(--text); font-weight: 600; }
+      section.card code {
+        font-family: ui-monospace, 'Cascadia Code', Menlo, monospace;
+        font-size: 12px;
+        background: rgba(245, 248, 255, 0.07);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 1px 6px;
+        color: var(--text);
+      }
+      a { color: var(--text); }
+      footer {
+        margin-top: 44px;
+        padding-top: 22px;
+        border-top: 1px solid var(--border);
+        text-align: center;
+        font-size: 12px;
+        line-height: 1.6;
+        color: var(--text-3);
+      }
+      footer .mono { color: var(--accent); font-weight: 500; }
+      @media (max-width: 480px) { h1 { font-size: 34px; } }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <span class="seal" aria-hidden="true">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+            <path d="M21 8 12 3 3 8v8l9 5 9-5V8Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round" />
+            <path d="M3 8l9 5 9-5M12 13v9" stroke="currentColor" stroke-width="2" stroke-linejoin="round" />
+          </svg>
+        </span>
+        <span class="wordmark">Context Grabber</span>
+        <span class="pill">Privacy Policy</span>
+      </header>
+
+      <section class="hero">
+        <p class="eyebrow">The short version</p>
+        <h1>Your data never leaves your computer.</h1>
+        <p class="lede">
+          Context Grabber has <strong>no servers, no telemetry, no analytics and no
+          accounts</strong>. Everything it captures is processed and stored locally in
+          your browser. The only time captured data goes anywhere is when
+          <strong>you</strong> explicitly copy a report or send it to an AI tool of
+          your choice.
+        </p>
+        <p class="updated">Last updated: July 1, 2026</p>
+      </section>
+
+      <section class="card">
+        <h2>What the extension processes — locally</h2>
+        <p>To build a bug report for the page you are on, Context Grabber captures, on your device only:</p>
+        <ul>
+          <li><strong>Console output</strong> — errors, warnings, uncaught exceptions and unhandled promise rejections emitted by the page (including inside its iframes).</li>
+          <li><strong>Failed network requests</strong> — URL, method, status code and, if you enabled the Pro response inspector, the first bytes of the error response body.</li>
+          <li><strong>Page metadata</strong> — URL, title, viewport size, browser version and detected frameworks (e.g. React, WordPress).</li>
+          <li><strong>Optional, on your action only:</strong> a screenshot of the visible tab or a region you select, and the HTML/styles of an element you click with the picker.</li>
+        </ul>
+        <p>None of this is transmitted anywhere by the extension. It exists so that <em>you</em> can paste one good bug report into the AI tool you already use.</p>
+      </section>
+
+      <section class="card">
+        <h2>What is stored, and where</h2>
+        <ul>
+          <li><strong>Report history</strong> — your last 15 generated reports, stored in the browser's local extension storage so you can re-copy them.</li>
+          <li><strong>Per-tab captures</strong> — picked elements and screenshots live in session storage and are cleared when the tab navigates or the browser closes.</li>
+          <li><strong>Settings and license key</strong> — your preferred export target and, if you bought Pro, your license key, stored in local extension storage.</li>
+        </ul>
+        <p>Uninstalling the extension deletes all of it. There is nothing to delete on any server, because there is no server.</p>
+      </section>
+
+      <section class="card">
+        <h2>Automatic secret redaction</h2>
+        <p>Before any report is copied or sent, obvious secrets — API keys, bearer tokens, JWTs, <code>password=…</code> parameters — are replaced with <code>[REDACTED]</code>. This runs always, on-device, and cannot be disabled.</p>
+      </section>
+
+      <section class="card">
+        <h2>When data does leave your device</h2>
+        <p>Only by your explicit action:</p>
+        <ul>
+          <li><strong>Copying a report</strong> puts it on your clipboard. Where you paste it is up to you.</li>
+          <li><strong>"Send to …"</strong> opens or fills the AI tool you chose (e.g. ChatGPT, Claude, Lovable, Bolt) with the report text. From that moment the data is governed by <em>that</em> service's privacy policy, not ours.</li>
+        </ul>
+        <p>The extension itself never phones home. It makes no network requests of its own.</p>
+      </section>
+
+      <section class="card">
+        <h2>Permissions, explained</h2>
+        <ul>
+          <li><code>&lt;all_urls&gt;</code> — bugs can happen on any page, so the capture script must be able to run on any page you visit. It only listens; it never alters page behavior.</li>
+          <li><code>activeTab</code> — used for the optional screenshot of the tab you are on.</li>
+          <li><code>storage</code> — the local report history and settings described above.</li>
+          <li><code>clipboardWrite</code> — the one-click copy of your report.</li>
+        </ul>
+      </section>
+
+      <section class="card">
+        <h2>Payments (Pro)</h2>
+        <p>Pro purchases are handled by a payment provider (e.g. Lemon Squeezy). Your payment details go to them directly and never touch the extension; we only see the license key they issue. Their privacy policy applies to the purchase itself.</p>
+      </section>
+
+      <section class="card">
+        <h2>Children, changes, contact</h2>
+        <p>The extension is a developer/creator tool and not directed at children. If this policy ever changes materially, the update will be visible in this document and in the extension's changelog before it takes effect.</p>
+        <p>Questions or concerns: open an issue at
+          <a href="https://github.com/ChristophBarton1/Context-Finder/issues">github.com/ChristophBarton1/Context-Finder</a>.
+        </p>
+      </section>
+
+      <footer>
+        <p>Context Grabber runs <span class="mono">100% locally</span> — privacy is the product, not a promise.</p>
+      </footer>
+    </div>
+  </body>
+</html>
