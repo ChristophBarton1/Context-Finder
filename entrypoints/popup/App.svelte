@@ -8,6 +8,7 @@
     LICENSE_STORAGE_KEY,
     LS_CHECKOUT_URL,
     LS_CONFIGURED,
+    LS_PRICE_LABEL,
     activateLicense,
     readStoredLicense,
     needsRevalidation,
@@ -169,6 +170,10 @@
         const prefs = await browser.storage.local.get(['cg:target', LICENSE_STORAGE_KEY]);
         const lic = readStoredLicense(prefs[LICENSE_STORAGE_KEY]);
         pro = lic !== null;
+        // Legacy format-check era stored a plain string — clean it up.
+        if (prefs[LICENSE_STORAGE_KEY] !== undefined && lic === null) {
+          browser.storage.local.remove(LICENSE_STORAGE_KEY).catch(() => {});
+        }
         if (lic && needsRevalidation(lic)) {
           // Optimistic: stay Pro now, downgrade only on an authoritative
           // "revoked" — never because the network was flaky.
@@ -181,6 +186,10 @@
               } else if (r === 'revoked') {
                 pro = false;
                 browser.storage.local.remove(LICENSE_STORAGE_KEY).catch(() => {});
+                // Don't leave a pro-only export format selected for the rest
+                // of this popup session.
+                const cur = EXPORT_TARGETS.find((t) => t.id === targetId);
+                if (cur?.pro) targetId = EXPORT_TARGETS[0].id;
               }
             })
             .catch(() => {});
@@ -581,7 +590,7 @@
                   rel="noopener"
                   class="mb-1 flex h-8 items-center justify-center rounded-lg bg-accent text-[11.5px] font-medium text-white transition-all hover:brightness-110"
                 >
-                  Get Pro — $29 lifetime
+                  Get Pro — {LS_PRICE_LABEL}
                 </a>
               {/if}
               <div class="flex gap-1.5">
@@ -589,6 +598,7 @@
                   bind:value={licenseInput}
                   placeholder="License key"
                   spellcheck="false"
+                  onkeydown={(e) => e.key === 'Enter' && unlockPro()}
                   class="h-8 min-w-0 flex-1 rounded-lg border border-line bg-surface px-2.5 font-mono text-[11px] transition-colors placeholder:text-ink-3 focus:border-accent focus:outline-none {licenseError ? 'border-danger' : ''}"
                 />
                 <button

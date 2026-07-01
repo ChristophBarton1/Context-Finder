@@ -17,6 +17,8 @@ export const LICENSE_STORAGE_KEY = 'cg:licenseKey';
 // LS_CONFIGURED is false: the checkout link stays hidden and activation
 // reports 'unconfigured' — Pro simply cannot be bought yet.
 export const LS_CHECKOUT_URL = '';
+/** Shown on the checkout button — keep in sync with the LS product price. */
+export const LS_PRICE_LABEL = '$29 lifetime';
 const LS_STORE_ID = 0;
 const LS_PRODUCT_ID = 0;
 export const LS_CONFIGURED: boolean = LS_STORE_ID > 0 && LS_PRODUCT_ID > 0;
@@ -52,7 +54,9 @@ export function readStoredLicense(v: unknown): StoredLicense | null {
 }
 
 export function needsRevalidation(lic: StoredLicense): boolean {
-  return Date.now() - lic.lastValidated > REVALIDATE_MS;
+  // abs() so a future timestamp (clock skew, hand-edited storage) can't
+  // suppress revalidation forever.
+  return Math.abs(Date.now() - lic.lastValidated) > REVALIDATE_MS;
 }
 
 interface LsMeta {

@@ -108,3 +108,12 @@ Everything the CWS developer dashboard asks for. Paste from here.
   network call, disclosed in the privacy policy). If the Lemon Squeezy
   product isn't live at submission time, the checkout link is hidden and Pro
   simply can't be purchased — nothing misleading in the listing.
+- **MANDATORY before flipping licensing on** (after filling `LS_STORE_ID`/
+  `LS_PRODUCT_ID`/`LS_CHECKOUT_URL` in `utils/license.ts`): run a full live
+  cycle against the real product — activate a test key → validate → refund/
+  disable it in the LS dashboard → validate again (must revoke). This
+  verifies three untestable-until-configured assumptions: JSON request
+  bodies are accepted by `/v1/licenses/*`, `meta.store_id`/`product_id`
+  appear on BOTH endpoint responses, and the activation-limit error message
+  still contains the word "limit". If any of the three fails, fix
+  `utils/license.ts` before selling a single key.
