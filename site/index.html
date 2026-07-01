@@ -156,12 +156,12 @@
         display: flex; align-items: center; gap: 9px;
         font-size: 12.5px; font-weight: 500; color: var(--danger);
       }
-      .report-card {
-        position: absolute; right: clamp(-12px, -1vw, -24px); bottom: clamp(-40px, -3.4vw, -56px);
-        width: min(52%, 560px);
-        background: var(--surface); border: 1px solid var(--border);
-        border-radius: 16px; overflow: hidden;
-        box-shadow: 0 1px 2px rgba(17, 18, 24, 0.06), 0 24px 56px rgba(17, 18, 24, 0.16);
+      /* real product screenshot, overlapping the browser scene */
+      .popup-shot {
+        position: absolute; right: clamp(-10px, -0.8vw, -20px); bottom: clamp(-44px, -3.6vw, -60px);
+        width: min(37%, 396px); display: block;
+        border-radius: 14px; border: 1px solid rgba(20, 19, 26, 0.4);
+        box-shadow: 0 1px 2px rgba(17, 18, 24, 0.08), 0 28px 60px rgba(17, 18, 24, 0.32);
         transform: rotate(-1deg);
       }
       .card-bar {
@@ -194,11 +194,11 @@
         font-size: 11.5px; font-weight: 500; color: var(--ok); background: var(--surface);
       }
       .note {
-        position: absolute; top: -30px; right: clamp(8px, 3vw, 48px); z-index: 2;
+        position: absolute; top: -34px; left: clamp(-10px, -0.8vw, -20px); z-index: 2;
         background: var(--surface); border: 1px solid var(--border);
         border-radius: 14px; padding: 14px 17px; text-align: left;
         box-shadow: var(--shadow-card);
-        transform: rotate(1.5deg); max-width: 260px;
+        transform: rotate(-1.5deg); max-width: 260px;
       }
       .note .lbl { font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3); }
       .note .bubble {
@@ -211,7 +211,7 @@
         .browser { width: 100%; }
         .browser-body { grid-template-columns: 1fr; }
         .chat-rail { display: none; }
-        .report-card { position: static; width: 100%; margin-top: 16px; transform: none; }
+        .popup-shot { position: static; width: min(100%, 392px); margin: 16px auto 0; transform: none; }
         .note { position: static; transform: none; margin: 0 0 16px; display: block; max-width: 100%; }
         .stage-panel { padding-bottom: clamp(28px, 4vw, 60px); }
         .scene { padding-bottom: 48px; }
@@ -306,6 +306,8 @@
         border-bottom: 1px solid var(--tint-border);
         position: relative; overflow: hidden; padding: clamp(20px, 2vw, 30px);
       }
+      .vcard-visual-dark { background: #17171a; padding: 0; border-bottom-color: rgba(20, 19, 26, 0.4); }
+      .vshot { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center top; }
       .vcard-text { padding: clamp(26px, 2.4vw, 36px); }
       .vcard h3 { font-size: clamp(17px, 1.4vw, 20px); font-weight: 600; letter-spacing: -0.015em; }
       .vcard p { margin-top: 9px; font-size: clamp(14px, 1.1vw, 16px); line-height: 1.62; color: var(--ink-2); }
@@ -513,30 +515,13 @@
               </div>
             </div>
           </div>
-          <div class="report-card" aria-hidden="true">
-            <div class="card-bar">
-              <span class="d"></span><span class="d"></span><span class="d"></span>
-              <span class="t">debug-context.md</span>
-              <span class="tag">one click</span>
-            </div>
-            <div class="report"><span class="h"># Bug report</span>
-
-<span class="k">**What I expected:**</span> profile loads
-<span class="k">**URL:**</span> myapp.lovable.app/profile
-<span class="k">**Detected stack:**</span> React
-
-<span class="h">## Console errors in your app (2)</span>
-<span class="e">[error]</span> TypeError: cannot read 'user'
-<span class="e">[uncaught]</span> profile never loaded
-
-<span class="h">## Failed network requests (1)</span>
-- GET /api/profile → <span class="e">404</span>
-- auth: Bearer <span class="redact"></span></div>
-            <p class="card-foot">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              sent into the Lovable chat — fixed first try
-            </p>
-          </div>
+          <img
+            class="popup-shot"
+            src="assets/popup-full.png"
+            alt="The real Context Grabber popup: 1 error and 1 failed request captured, one Send to ChatGPT button"
+            width="392"
+            height="588"
+          />
         </div>
       </div>
     </header>
@@ -654,15 +639,14 @@
           </div>
           <div class="sec-body grid2x2">
             <div class="vcard">
-              <div class="vcard-visual" aria-hidden="true">
-                <div class="mock-lines">
-                  <div class="mock-line" style="width: 58%"></div>
-                  <div class="mock-line" style="width: 74%"></div>
-                </div>
-                <div class="mock-el-wrap">
-                  <div class="mock-el"></div>
-                  <span class="sel-chip">button.checkout</span>
-                </div>
+              <div class="vcard-visual vcard-visual-dark">
+                <img
+                  class="vshot"
+                  src="assets/popup-element.png"
+                  alt="Element tab of the real popup: Point at the bug button"
+                  width="373"
+                  height="185"
+                />
               </div>
               <div class="vcard-text">
                 <h3>Element picker</h3>
