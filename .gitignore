@@ -4,3 +4,13 @@ node_modules/
 stats.html
 stats-*.json
 .env
+.env.*
+
+# internal strategy docs stay local
+docs/BUSINESS-PLAN.md
+
+# OS junk
+Thumbs.db
+desktop.ini
+.DS_Store
+*.log

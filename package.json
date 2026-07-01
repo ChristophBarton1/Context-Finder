@@ -1,8 +1,8 @@
 {
   "name": "context-grabber",
-  "description": "One-click bug reports for AI coding – console errors, failed requests & element context, formatted for Claude, ChatGPT & Cursor.",
+  "description": "One-click bug reports for AI coding – console errors, failed requests & element context, sent straight into Lovable, Bolt, Replit, v0, ChatGPT & Claude.",
   "private": true,
-  "version": "0.3.0",
+  "version": "0.5.0",
   "type": "module",
   "scripts": {
     "dev": "wxt",

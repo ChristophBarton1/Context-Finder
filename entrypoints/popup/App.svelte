@@ -4,10 +4,18 @@
   import { FREE_PICKS_PER_DAY } from '@/utils/types';
   import { groupErrors, detectIssueTags } from '@/utils/report';
   import { EXPORT_TARGETS, MAX_PREFILL_URL, buildExport } from '@/utils/export-targets';
-  import { LICENSE_STORAGE_KEY, isProKey, normalizeKey } from '@/utils/license';
+  import {
+    LICENSE_STORAGE_KEY,
+    LS_CHECKOUT_URL,
+    LS_CONFIGURED,
+    activateLicense,
+    readStoredLicense,
+    needsRevalidation,
+    validateLicense,
+  } from '@/utils/license';
   import { TARGET_ICONS, STACK_ICONS, type BrandIcon } from '@/utils/icons';
   import { isTracker, isNoiseMessage } from '@/utils/trackers';
-  import { isBuilderHost, hostOf, isEditorOrigin } from '@/utils/builders';
+  import { isBuilderHost, hostOf, isEditorOrigin, builderLabel } from '@/utils/builders';
 
   type ViewState = 'loading' | 'ready' | 'unavailable' | 'needsreload';
   type Tab = 'export' | 'report' | 'screenshot' | 'element' | 'network';
@@ -26,7 +34,8 @@
   let pro = $state(false);
   let settingsOpen = $state(false);
   let licenseInput = $state('');
-  let licenseError = $state(false);
+  let licenseError = $state<string | null>(null);
+  let licenseBusy = $state(false);
   let shotUrl = $state<string | null>(null);
   let capturedAt = $state(Date.now());
   let now = $state(Date.now());
@@ -158,7 +167,24 @@
         picksUsedToday = (usage[todayKey()] as number) ?? 0;
 
         const prefs = await browser.storage.local.get(['cg:target', LICENSE_STORAGE_KEY]);
-        pro = isProKey(prefs[LICENSE_STORAGE_KEY]);
+        const lic = readStoredLicense(prefs[LICENSE_STORAGE_KEY]);
+        pro = lic !== null;
+        if (lic && needsRevalidation(lic)) {
+          // Optimistic: stay Pro now, downgrade only on an authoritative
+          // "revoked" — never because the network was flaky.
+          validateLicense(lic)
+            .then((r) => {
+              if (r === 'valid') {
+                browser.storage.local
+                  .set({ [LICENSE_STORAGE_KEY]: { ...lic, lastValidated: Date.now() } })
+                  .catch(() => {});
+              } else if (r === 'revoked') {
+                pro = false;
+                browser.storage.local.remove(LICENSE_STORAGE_KEY).catch(() => {});
+              }
+            })
+            .catch(() => {});
+        }
         const saved = prefs['cg:target'];
         if (
           typeof saved === 'string' &&
@@ -223,14 +249,23 @@
     browser.storage.local.set({ 'cg:target': id }).catch(() => {});
   }
 
-  function unlockPro() {
-    const key = normalizeKey(licenseInput);
-    if (isProKey(key)) {
+  async function unlockPro() {
+    if (licenseBusy) return;
+    licenseBusy = true;
+    licenseError = null;
+    const res = await activateLicense(licenseInput);
+    licenseBusy = false;
+    if (res.ok) {
       pro = true;
-      licenseError = false;
-      browser.storage.local.set({ [LICENSE_STORAGE_KEY]: key }).catch(() => {});
+      browser.storage.local.set({ [LICENSE_STORAGE_KEY]: res.license }).catch(() => {});
+    } else if (res.reason === 'limit') {
+      licenseError = 'This key is already active on its maximum number of devices.';
+    } else if (res.reason === 'offline') {
+      licenseError = "Couldn't reach the license server — check your connection and try again.";
+    } else if (res.reason === 'unconfigured') {
+      licenseError = "Pro purchases aren't open yet — keys can't be activated in this build.";
     } else {
-      licenseError = true;
+      licenseError = "That key doesn't look valid.";
     }
   }
 
@@ -539,22 +574,33 @@
               {/each}
             </ul>
             <div class="flex flex-col gap-1.5 border-t border-line px-4 py-3">
+              {#if LS_CONFIGURED && LS_CHECKOUT_URL}
+                <a
+                  href={LS_CHECKOUT_URL}
+                  target="_blank"
+                  rel="noopener"
+                  class="mb-1 flex h-8 items-center justify-center rounded-lg bg-accent text-[11.5px] font-medium text-white transition-all hover:brightness-110"
+                >
+                  Get Pro — $29 lifetime
+                </a>
+              {/if}
               <div class="flex gap-1.5">
                 <input
                   bind:value={licenseInput}
-                  placeholder="CG-XXXX-XXXX-XXXX"
+                  placeholder="License key"
                   spellcheck="false"
-                  class="h-8 min-w-0 flex-1 rounded-lg border border-line bg-surface px-2.5 font-mono text-[11px] uppercase transition-colors placeholder:normal-case placeholder:text-ink-3 focus:border-accent focus:outline-none {licenseError ? 'border-danger' : ''}"
+                  class="h-8 min-w-0 flex-1 rounded-lg border border-line bg-surface px-2.5 font-mono text-[11px] transition-colors placeholder:text-ink-3 focus:border-accent focus:outline-none {licenseError ? 'border-danger' : ''}"
                 />
                 <button
                   onclick={unlockPro}
-                  class="h-8 shrink-0 rounded-lg bg-accent px-3 text-[11.5px] font-medium text-white transition-all hover:brightness-110"
+                  disabled={licenseBusy}
+                  class="h-8 shrink-0 rounded-lg bg-accent px-3 text-[11.5px] font-medium text-white transition-all hover:brightness-110 disabled:opacity-60"
                 >
-                  Unlock
+                  {licenseBusy ? '…' : 'Unlock'}
                 </button>
               </div>
               {#if licenseError}
-                <p class="text-[10.5px] text-danger">That doesn't look like a valid key.</p>
+                <p class="text-[10.5px] text-danger">{licenseError}</p>
               {/if}
             </div>
           {:else}
@@ -668,7 +714,7 @@
         <div class="flex items-center">
           <div>
             <p class="text-[13px] font-semibold tracking-[-0.01em]">Export for AI</p>
-            <p class="text-[11px] text-ink-3">Copy optimized context for any AI tool.</p>
+            <p class="text-[11px] text-ink-3">Send optimized context to any AI tool.</p>
           </div>
           <button
             class="ml-auto flex items-center gap-1.5 text-[11.5px] font-medium text-accent hover:underline"
@@ -983,7 +1029,7 @@
         <div class="overflow-hidden rounded-xl border border-line bg-surface">
           {#if onBuilder && editorProblemCount > 0}
             <p class="border-b border-line px-4 py-2 text-[10.5px] text-ink-3">
-              {editorProblemCount} more from the builder's editor — hidden as background noise.
+              {editorProblemCount} more from {builderLabel(pageHostName)}'s editor — hidden as background noise.
             </p>
           {/if}
           {#if failures.length === 0 && trackers.length === 0}
