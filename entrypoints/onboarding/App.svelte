@@ -165,7 +165,7 @@
             <button
               onclick={breakIt}
               disabled={bugTriggered}
-              class="h-9 shrink-0 rounded-full bg-accent px-5 text-[13px] font-semibold text-accent-ink transition-all duration-200 ease-out hover:bg-white active:scale-[0.99] disabled:opacity-50"
+              class="h-9 shrink-0 rounded-full bg-accent px-5 text-[13px] font-semibold text-accent-ink transition-all duration-200 ease-out hover:brightness-110 active:scale-[0.99] disabled:opacity-50"
             >
               Load my profile
             </button>

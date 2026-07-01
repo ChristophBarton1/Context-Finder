@@ -1,0 +1,4 @@
+# Netlify serves the static site/ folder as the site root — same layout
+# GitHub Pages publishes, so index/privacy/uninstall URLs match on both.
+[build]
+  publish = "site"

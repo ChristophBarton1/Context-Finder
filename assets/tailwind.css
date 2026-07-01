@@ -66,11 +66,11 @@ body {
 }
 
 /* ------------------------------------------------------------------ *
- * Solflare-style design system (install + uninstall pages)
- * Dark near-black canvas, ochre-yellow accent, one clean grotesque,
- * pill buttons + large radii. Tokens taken from solflare.com's own CSS.
- * Font bundled locally so the extension stays 100% local; Space Grotesk
- * is the closest free relative to their FK Grotesk (same designer).
+ * "Engineering paper" brand system (install + uninstall + site pages)
+ * Warm paper-white canvas with a faint graph-paper grid, ink-black
+ * type, one indigo accent (the same #4f5ee8 the picker highlight
+ * uses — the brand color IS the product color), monospace details.
+ * Font bundled locally so the extension stays 100% local.
  * ------------------------------------------------------------------ */
 @font-face {
   font-family: 'Space Grotesk';
@@ -83,20 +83,20 @@ body {
 /* Scoped palette override — only elements under .cg-brand change, so the
  * popup keeps its original look untouched. */
 .cg-brand {
-  --bg: #02050a;
-  --surface: #0c0f14;
-  --surface-2: #14161b;
-  --border: #24262b;
-  --border-strong: #45474d;
-  --text: #f5f8ff;
-  --text-2: #c1c4ce;
-  --text-3: #898a93;
-  --accent: #f5f8ff;
-  --accent-soft: rgba(245, 248, 255, 0.1);
-  --accent-ink: #02050a;
-  --danger: #ff4b3f;
-  --danger-soft: rgba(255, 75, 63, 0.13);
-  --ok: #71cc49;
+  --bg: #faf9f7;
+  --surface: #ffffff;
+  --surface-2: #f2f1ec;
+  --border: #e7e5df;
+  --border-strong: #d2cfc6;
+  --text: #14131a;
+  --text-2: #565560;
+  --text-3: #8b8a94;
+  --accent: #4f5ee8;
+  --accent-soft: rgba(79, 94, 232, 0.08);
+  --accent-ink: #ffffff;
+  --danger: #d92d20;
+  --danger-soft: rgba(217, 45, 32, 0.06);
+  --ok: #12915e;
 
   --ease-sf: cubic-bezier(0.16, 0.84, 0.44, 1);
 
@@ -104,6 +104,11 @@ body {
   --font-display: 'Space Grotesk', system-ui, sans-serif;
 
   background: var(--bg);
+  /* faint graph-paper grid — the brand texture */
+  background-image:
+    linear-gradient(to right, rgba(20, 19, 26, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(20, 19, 26, 0.04) 1px, transparent 1px);
+  background-size: 28px 28px;
   color: var(--text);
 }
 

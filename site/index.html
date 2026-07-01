@@ -1,0 +1,523 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Context Grabber — one-click AI bug reports for Lovable, Bolt & Co.</title>
+    <meta
+      name="description"
+      content="When your AI-built app breaks, 'it doesn't work' makes the AI guess. Context Grabber captures what actually broke and drops it straight into your Lovable, Bolt or ChatGPT chat. 100% local."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #faf9f7;
+        --surface: #ffffff;
+        --surface-2: #f2f1ec;
+        --border: #e7e5df;
+        --border-strong: #d2cfc6;
+        --ink: #14131a;
+        --ink-2: #565560;
+        --ink-3: #8b8a94;
+        --accent: #4f5ee8;
+        --accent-deep: #3a48c9;
+        --accent-soft: rgba(79, 94, 232, 0.08);
+        --danger: #d92d20;
+        --ok: #12915e;
+        --font: 'Space Grotesk', system-ui, -apple-system, 'Segoe UI', sans-serif;
+        --mono: 'JetBrains Mono', ui-monospace, 'Cascadia Code', Consolas, monospace;
+        --ease: cubic-bezier(0.16, 0.84, 0.44, 1);
+      }
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
+      body {
+        background: var(--bg);
+        background-image:
+          linear-gradient(to right, rgba(20, 19, 26, 0.04) 1px, transparent 1px),
+          linear-gradient(to bottom, rgba(20, 19, 26, 0.04) 1px, transparent 1px);
+        background-size: 28px 28px;
+        color: var(--ink);
+        font-family: var(--font);
+        line-height: 1.4;
+      }
+      .wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+      a { color: inherit; text-decoration: none; }
+
+      @keyframes rise { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+      .rise { animation: rise 0.7s var(--ease) both; }
+      @media (prefers-reduced-motion: reduce) { .rise { animation: none; } }
+
+      /* ---------- nav ---------- */
+      nav {
+        position: sticky; top: 0; z-index: 40;
+        background: rgba(250, 249, 247, 0.88);
+        backdrop-filter: blur(10px);
+        border-bottom: 1px solid var(--border);
+      }
+      .nav-inner { display: flex; align-items: center; gap: 28px; height: 64px; }
+      .mark {
+        display: flex; align-items: center; justify-content: center;
+        width: 34px; height: 34px; border-radius: 9px;
+        background: var(--accent); color: #fff;
+        box-shadow: 0 1px 0 rgba(20, 19, 26, 0.15);
+      }
+      .wordmark { font-size: 15.5px; font-weight: 600; letter-spacing: -0.01em; }
+      .nav-links { display: flex; gap: 22px; margin-left: 12px; font-size: 13.5px; color: var(--ink-2); }
+      .nav-links a:hover { color: var(--ink); }
+      .btn {
+        display: inline-flex; align-items: center; gap: 8px;
+        font-family: inherit; font-size: 14px; font-weight: 600; letter-spacing: -0.01em;
+        border-radius: 100px; padding: 11px 22px; cursor: pointer;
+        border: 1px solid transparent; transition: all 0.15s ease;
+      }
+      .btn-primary { background: var(--accent); color: #fff; }
+      .btn-primary:hover { background: var(--accent-deep); }
+      .btn-ghost { border-color: var(--border-strong); color: var(--ink); background: transparent; }
+      .btn-ghost:hover { border-color: var(--ink-3); }
+      .btn-sm { padding: 8px 16px; font-size: 13px; }
+      .nav-cta { margin-left: auto; display: flex; align-items: center; gap: 14px; }
+      .gh { color: var(--ink-3); display: inline-flex; }
+      .gh:hover { color: var(--ink); }
+      @media (max-width: 720px) { .nav-links { display: none; } }
+
+      /* ---------- hero ---------- */
+      .hero { padding: 88px 0 64px; display: grid; grid-template-columns: 1fr; gap: 56px; }
+      @media (min-width: 940px) { .hero { grid-template-columns: 1.05fr 0.95fr; align-items: center; } }
+      .eyebrow {
+        display: inline-flex; align-items: center; gap: 8px;
+        font-family: var(--mono); font-size: 11px; font-weight: 600;
+        letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent);
+        border: 1px solid var(--border-strong); border-radius: 100px;
+        background: var(--surface); padding: 6px 14px;
+      }
+      .eyebrow .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--ok); }
+      h1 {
+        margin-top: 22px; font-size: clamp(2.5rem, 5.4vw, 3.9rem);
+        font-weight: 700; line-height: 1.02; letter-spacing: -0.035em;
+      }
+      h1 .hl { background: var(--accent); color: #fff; padding: 0 0.18em; border-radius: 10px; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
+      .lede { margin-top: 22px; max-width: 480px; font-size: 17px; line-height: 1.6; color: var(--ink-2); }
+      .hero-ctas { margin-top: 30px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+      .trust { margin-top: 22px; display: flex; flex-wrap: wrap; gap: 8px; }
+      .chip {
+        font-size: 11.5px; font-weight: 500; color: var(--ink-2);
+        border: 1px solid var(--border-strong); background: var(--surface);
+        border-radius: 100px; padding: 5px 12px;
+      }
+
+      /* ---------- hero visual: before/after ---------- */
+      .stage { position: relative; }
+      .fig-cap {
+        font-family: var(--mono); font-size: 10.5px; color: var(--ink-3);
+        letter-spacing: 0.06em; margin-bottom: 8px;
+      }
+      .card {
+        background: var(--surface); border: 1px solid var(--border);
+        border-radius: 16px; overflow: hidden;
+        box-shadow: 0 1px 2px rgba(20, 19, 26, 0.04), 0 12px 32px -18px rgba(20, 19, 26, 0.18);
+      }
+      .card-bar {
+        display: flex; align-items: center; gap: 6px;
+        border-bottom: 1px solid var(--border); padding: 9px 14px;
+      }
+      .card-bar .d { width: 8px; height: 8px; border-radius: 50%; background: var(--border-strong); }
+      .card-bar .t { margin-left: 6px; font-family: var(--mono); font-size: 10.5px; color: var(--ink-3); }
+      .card-bar .tag {
+        margin-left: auto; font-family: var(--mono); font-size: 9px;
+        border: 1px solid var(--border); border-radius: 5px; padding: 2px 7px; color: var(--ink-3);
+      }
+      .before { max-width: 320px; }
+      .before .body { padding: 16px; }
+      .bubble {
+        display: inline-block; background: var(--surface-2);
+        border-radius: 14px 14px 14px 4px; padding: 10px 14px;
+        font-size: 13.5px; color: var(--ink-2);
+      }
+      .before .verdict {
+        margin-top: 12px; display: flex; align-items: center; gap: 7px;
+        font-size: 11.5px; color: var(--danger); font-weight: 500;
+      }
+      .after { margin-top: 18px; margin-left: 34px; }
+      @media (max-width: 500px) { .after { margin-left: 0; } }
+      .report {
+        padding: 16px 18px; font-family: var(--mono); font-size: 11px;
+        line-height: 1.75; color: var(--ink-2); overflow-x: auto; white-space: pre;
+      }
+      .report .h { color: var(--ink); font-weight: 600; }
+      .report .k { color: var(--ink); }
+      .report .e { color: var(--danger); }
+      .report .redact {
+        display: inline-block; width: 74px; height: 10px; border-radius: 3px;
+        background: repeating-linear-gradient(45deg, var(--ink) 0 4px, #3a3944 4px 8px);
+        vertical-align: middle; opacity: 0.85;
+      }
+      .after .verdict { padding: 10px 18px 14px; display: flex; align-items: center; gap: 7px; font-size: 11.5px; color: var(--ok); font-weight: 500; }
+      .connector {
+        position: absolute; left: 150px; top: 118px; color: var(--accent);
+        display: none;
+      }
+      @media (min-width: 500px) { .connector { display: block; } }
+
+      /* ---------- logo strip ---------- */
+      .strip { border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); background: var(--surface); }
+      .strip-inner { display: flex; flex-wrap: wrap; align-items: center; gap: 26px 34px; padding: 22px 0; }
+      .strip-label { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-3); }
+      .logo-item { display: inline-flex; align-items: center; gap: 8px; font-size: 13.5px; font-weight: 500; color: var(--ink-2); }
+      .logo-item svg { flex: none; }
+
+      /* ---------- sections ---------- */
+      section { padding: 84px 0; }
+      .sec-eyebrow { font-family: var(--mono); font-size: 11px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent); }
+      h2 { margin-top: 12px; font-size: clamp(1.7rem, 3.4vw, 2.4rem); font-weight: 700; letter-spacing: -0.03em; line-height: 1.08; }
+      .sec-lede { margin-top: 14px; max-width: 560px; font-size: 15.5px; line-height: 1.6; color: var(--ink-2); }
+
+      .steps { margin-top: 44px; display: grid; gap: 18px; }
+      @media (min-width: 760px) { .steps { grid-template-columns: repeat(3, 1fr); } }
+      .step { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 22px; position: relative; }
+      .step-no {
+        display: inline-flex; align-items: center; justify-content: center;
+        width: 30px; height: 30px; border-radius: 50%;
+        border: 1.5px solid var(--accent); color: var(--accent);
+        font-family: var(--mono); font-size: 12.5px; font-weight: 600;
+      }
+      .step h3 { margin-top: 14px; font-size: 15.5px; font-weight: 600; letter-spacing: -0.01em; }
+      .step p { margin-top: 7px; font-size: 13.5px; line-height: 1.6; color: var(--ink-2); }
+
+      /* ---------- split section ---------- */
+      .split { display: grid; gap: 44px; align-items: center; }
+      @media (min-width: 940px) { .split { grid-template-columns: 1fr 1fr; } }
+      .mini-report { font-family: var(--mono); font-size: 11.5px; line-height: 1.8; padding: 18px 20px; color: var(--ink-2); }
+      .mini-report .sec-h { color: var(--ink); font-weight: 600; }
+      .mini-report .ok-line { color: var(--ok); }
+      .mini-report .muted-block {
+        margin-top: 10px; border: 1px dashed var(--border-strong); border-radius: 10px;
+        padding: 10px 12px; color: var(--ink-3); font-size: 10.5px; line-height: 1.7;
+      }
+      .checklist { margin-top: 26px; display: flex; flex-direction: column; gap: 13px; }
+      .check { display: flex; gap: 11px; font-size: 14.5px; line-height: 1.55; color: var(--ink-2); }
+      .check .tick {
+        flex: none; margin-top: 2px; width: 19px; height: 19px; border-radius: 50%;
+        background: var(--accent); color: #fff; display: flex; align-items: center; justify-content: center;
+      }
+      .check strong { color: var(--ink); font-weight: 600; }
+
+      /* ---------- feature grid ---------- */
+      .grid4 { margin-top: 44px; display: grid; gap: 18px; }
+      @media (min-width: 640px) { .grid4 { grid-template-columns: repeat(2, 1fr); } }
+      @media (min-width: 1000px) { .grid4 { grid-template-columns: repeat(4, 1fr); } }
+      .feat { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 20px; }
+      .feat .ic {
+        display: inline-flex; align-items: center; justify-content: center;
+        width: 32px; height: 32px; border-radius: 9px; background: var(--accent-soft); color: var(--accent);
+      }
+      .feat h3 { margin-top: 13px; font-size: 14.5px; font-weight: 600; }
+      .feat p { margin-top: 6px; font-size: 12.5px; line-height: 1.6; color: var(--ink-2); }
+
+      /* ---------- pro ---------- */
+      .pro-card {
+        margin-top: 40px; border: 1px solid var(--border); border-radius: 20px;
+        background: var(--surface); display: grid; gap: 0; overflow: hidden;
+      }
+      @media (min-width: 860px) { .pro-card { grid-template-columns: 1fr 1fr; } }
+      .pro-left { padding: 30px; border-bottom: 1px solid var(--border); }
+      @media (min-width: 860px) { .pro-left { border-bottom: 0; border-right: 1px solid var(--border); } }
+      .price { display: flex; align-items: baseline; gap: 10px; margin-top: 14px; }
+      .price .n { font-size: 44px; font-weight: 700; letter-spacing: -0.03em; }
+      .price .per { font-size: 13px; color: var(--ink-3); }
+      .pro-right { padding: 30px; display: flex; flex-direction: column; gap: 12px; background: var(--surface-2); }
+      .pro-item { display: flex; gap: 10px; font-size: 13.5px; color: var(--ink-2); }
+      .pro-item .tick { flex: none; margin-top: 3px; width: 16px; height: 16px; border-radius: 50%; background: var(--ink); color: var(--bg); display: flex; align-items: center; justify-content: center; }
+      .soon { font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; border: 1px solid var(--border-strong); border-radius: 100px; padding: 4px 10px; color: var(--ink-3); }
+
+      /* ---------- privacy band ---------- */
+      .band { border-top: 1px solid var(--border); background: var(--surface); }
+      .band-inner { padding: 56px 0; display: grid; gap: 26px; }
+      @media (min-width: 860px) { .band-inner { grid-template-columns: auto 1fr; align-items: center; gap: 40px; } }
+      .band .seal {
+        width: 72px; height: 72px; border-radius: 50%;
+        border: 1.5px solid var(--ink); display: flex; align-items: center; justify-content: center;
+      }
+      .band h2 { font-size: clamp(1.4rem, 2.6vw, 1.9rem); margin-top: 0; }
+      .band p { margin-top: 10px; max-width: 620px; font-size: 14.5px; line-height: 1.65; color: var(--ink-2); }
+      .band a { color: var(--accent); font-weight: 500; }
+      .band a:hover { text-decoration: underline; }
+
+      /* ---------- footer ---------- */
+      footer { border-top: 1px solid var(--border); }
+      .foot-inner { display: flex; flex-wrap: wrap; align-items: center; gap: 18px; padding: 28px 0; font-size: 12.5px; color: var(--ink-3); }
+      .foot-links { display: flex; gap: 18px; margin-left: auto; }
+      .foot-links a:hover { color: var(--ink); }
+    </style>
+  </head>
+  <body>
+    <nav>
+      <div class="wrap nav-inner">
+        <a href="#" style="display: flex; align-items: center; gap: 11px">
+          <span class="mark" aria-hidden="true">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
+              <path d="M21 8 12 3 3 8v8l9 5 9-5V8Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round" />
+              <path d="M3 8l9 5 9-5M12 13v9" stroke="currentColor" stroke-width="2" stroke-linejoin="round" />
+            </svg>
+          </span>
+          <span class="wordmark">Context Grabber</span>
+        </a>
+        <div class="nav-links">
+          <a href="#how">How it works</a>
+          <a href="#pro">Pro</a>
+          <a href="privacy.html">Privacy</a>
+        </div>
+        <div class="nav-cta">
+          <a class="gh" href="https://github.com/ChristophBarton1/Context-Finder" aria-label="GitHub">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56 0-.27-.01-1.17-.02-2.12-3.2.7-3.87-1.36-3.87-1.36-.52-1.33-1.28-1.68-1.28-1.68-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.19 1.76 1.19 1.03 1.75 2.69 1.25 3.34.95.1-.74.4-1.25.72-1.53-2.55-.29-5.23-1.28-5.23-5.68 0-1.26.45-2.28 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.77 0c2.2-1.49 3.16-1.18 3.16-1.18.63 1.59.24 2.76.12 3.05.74.81 1.18 1.83 1.18 3.09 0 4.41-2.69 5.38-5.25 5.67.41.35.77 1.05.77 2.12 0 1.53-.01 2.76-.01 3.14 0 .31.2.67.8.56A10.52 10.52 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5Z"/></svg>
+          </a>
+          <!-- TODO(owner): swap href to the Chrome Web Store listing once live -->
+          <a class="btn btn-primary btn-sm" href="https://github.com/ChristophBarton1/Context-Finder">Add to Chrome</a>
+        </div>
+      </div>
+    </nav>
+
+    <header class="wrap hero">
+      <div>
+        <span class="eyebrow rise"><span class="dot"></span>Chrome extension · 100% local</span>
+        <h1 class="rise" style="animation-delay: 0.06s">
+          Your AI built it.<br />Now tell it <span class="hl">what broke</span>.
+        </h1>
+        <p class="lede rise" style="animation-delay: 0.12s">
+          "It doesn't work" makes your AI guess — and guessing costs you three more
+          broken attempts. Context Grabber captures the actual errors and drops a
+          precise bug report straight into your Lovable, Bolt or ChatGPT chat.
+        </p>
+        <div class="hero-ctas rise" style="animation-delay: 0.18s">
+          <!-- TODO(owner): swap href to the Chrome Web Store listing once live -->
+          <a class="btn btn-primary" href="https://github.com/ChristophBarton1/Context-Finder">
+            Add to Chrome — it's free
+          </a>
+          <a class="btn btn-ghost" href="#how">See how it works</a>
+        </div>
+        <div class="trust rise" style="animation-delay: 0.24s">
+          <span class="chip">No account</span>
+          <span class="chip">No servers</span>
+          <span class="chip">Secrets auto-redacted</span>
+        </div>
+      </div>
+
+      <div class="stage rise" style="animation-delay: 0.2s">
+        <div class="before card">
+          <div class="card-bar"><span class="d"></span><span class="d"></span><span class="d"></span><span class="t">without</span></div>
+          <div class="body">
+            <span class="bubble">it doesn't work :(</span>
+            <p class="verdict">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
+              AI guesses · 3 failed fixes later…
+            </p>
+          </div>
+        </div>
+        <span class="connector" aria-hidden="true">
+          <svg width="46" height="52" viewBox="0 0 46 52" fill="none"><path d="M8 4c22 6 34 18 30 44" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-dasharray="1 7"/><path d="m32 41 6 8 7-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+        </span>
+        <div class="after card">
+          <div class="card-bar">
+            <span class="d"></span><span class="d"></span><span class="d"></span>
+            <span class="t">debug-context.md</span>
+            <span class="tag">one click</span>
+          </div>
+          <div class="report"><span class="h"># Bug report</span>
+
+<span class="k">**What I expected:**</span> profile loads
+<span class="k">**URL:**</span> myapp.lovable.app/profile
+<span class="k">**Detected stack:**</span> React
+
+<span class="h">## Console errors in your app (2)</span>
+<span class="e">[error]</span> TypeError: cannot read
+  'user' at app.js:42
+<span class="e">[uncaught]</span> profile never loaded
+
+<span class="h">## Failed requests (1)</span>
+- GET /api/profile → <span class="e">404</span>
+- auth: Bearer <span class="redact"></span></div>
+          <p class="verdict">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            fixed on the first try
+          </p>
+        </div>
+      </div>
+    </header>
+
+    <div class="strip">
+      <div class="wrap strip-inner">
+        <span class="strip-label">Drops your report straight into</span>
+        <span class="logo-item"><svg width="16" height="16" viewBox="0 0 121 122"><path fill="#1E52F1" d="M36.069 0c19.92 0 36.068 16.155 36.068 36.084v13.713h12.004c19.92 0 36.069 16.156 36.069 36.084 0 19.928-16.149 36.083-36.069 36.083H0v-85.88C0 16.155 16.148 0 36.069 0Z"/></svg>Lovable</span>
+        <span class="logo-item"><svg width="16" height="16" viewBox="0 0 16 16"><path fill="#14131a" fill-rule="evenodd" clip-rule="evenodd" d="M8.64368 11.7731C7.91976 11.7731 7.20901 11.5147 6.80099 10.9591L6.65707 11.6143L4 13L4.28684 11.6143L6.22186 3H8.59103L7.9066 6.03634C8.45941 5.44199 8.97273 5.22234 9.63083 5.22234C11.0523 5.22234 12 6.1397 12 7.81938C12 9.55074 10.9076 11.7731 8.64368 11.7731ZM9.55186 8.31036C9.55186 9.11144 8.97273 9.71871 8.22249 9.71871C7.8013 9.71871 7.4196 9.56366 7.16952 9.29233L7.53806 7.70309C7.81447 7.43176 8.13036 7.27671 8.49889 7.27671C9.06486 7.27671 9.55186 7.69017 9.55186 8.31036Z"/></svg>Bolt</span>
+        <span class="logo-item"><svg width="15" height="15" viewBox="0 0 24 24"><path fill="#F26207" d="M2 1.5A1.5 1.5 0 0 1 3.5 0h7A1.5 1.5 0 0 1 12 1.5V8H3.5A1.5 1.5 0 0 1 2 6.5ZM12 8h8.5A1.5 1.5 0 0 1 22 9.5v5a1.5 1.5 0 0 1-1.5 1.5H12ZM2 17.5A1.5 1.5 0 0 1 3.5 16H12v6.5a1.5 1.5 0 0 1-1.5 1.5h-7A1.5 1.5 0 0 1 2 22.5Z"/></svg>Replit</span>
+        <span class="logo-item"><svg width="17" height="17" viewBox="0 0 24 24"><path fill="#14131a" d="M14.066 6.028v2.22h5.729q.075-.001.148.005l-5.853 5.752a2 2 0 0 1-.024-.309V8.247h-2.353v5.45c0 2.322 1.935 4.222 4.258 4.222h5.675v-2.22h-5.675q-.03 0-.059-.003l5.729-5.629q.006.082.006.166v5.465H24v-5.465a4.204 4.204 0 0 0-4.205-4.205zM0 8.245l8.28 9.266c.839.94 2.396.346 2.396-.914V8.245H8.19v5.44l-4.86-5.44Z"/></svg>v0</span>
+        <span class="logo-item"><svg width="16" height="16" viewBox="0 0 295 295"><path fill="#FF983B" d="M236.95 263.861C237.341 263.861 237.513 264.358 237.201 264.596C212.348 283.664 181.247 295 147.5 295C113.752 295 82.6518 283.667 57.7981 264.596C57.4867 264.358 57.6588 263.861 58.0494 263.861H236.953H236.95ZM275.426 220.977C270.274 229.928 264.208 238.286 257.36 245.926C257.1 246.216 256.729 246.38 256.341 246.38H38.6614C38.2735 246.38 37.902 246.216 37.6425 245.926C30.792 238.286 24.7281 229.928 19.5765 220.977C19.3662 220.614 19.6312 220.158 20.0518 220.158H274.95C275.371 220.158 275.636 220.614 275.426 220.977ZM292.082 176.836C290.329 185.52 287.813 193.927 284.609 201.988C284.442 202.403 284.038 202.676 283.59 202.676H11.4094C10.9615 202.676 10.5572 202.403 10.3906 201.988C7.18657 193.93 4.67088 185.522 2.91727 176.836C2.84899 176.498 3.10848 176.181 3.45537 176.181H291.544C291.888 176.181 292.151 176.498 292.082 176.836ZM146.503 0.00328822C228.422 -0.537544 294.999 65.7062 294.999 147.5C294.999 151.095 294.871 154.659 294.62 158.191C294.601 158.478 294.36 158.699 294.073 158.699H0.928759C0.641954 158.699 0.401584 158.478 0.382464 158.191C0.131168 154.706 0.00278846 151.185 5.69817e-05 147.634C-0.0709614 67.3806 66.252 0.535926 146.503 0.00328822Z"/></svg>Base44</span>
+        <span class="logo-item"><svg width="16" height="16" viewBox="0 0 256 260"><path fill="#14131a" d="M239.184 106.203a64.716 64.716 0 0 0-5.576-53.103C219.452 28.459 191 15.784 163.213 21.74A65.586 65.586 0 0 0 52.096 45.22a64.716 64.716 0 0 0-43.23 31.36c-14.31 24.602-11.061 55.634 8.033 76.74a64.665 64.665 0 0 0 5.525 53.102c14.174 24.65 42.644 37.324 70.446 31.36a64.72 64.72 0 0 0 48.754 21.744c28.481.025 53.714-18.361 62.414-45.481a64.767 64.767 0 0 0 43.229-31.36c14.137-24.558 10.875-55.423-8.083-76.483Zm-97.56 136.338a48.397 48.397 0 0 1-31.105-11.255l1.535-.87 51.67-29.825a8.595 8.595 0 0 0 4.247-7.367v-72.85l21.845 12.636c.218.111.37.32.409.563v60.367c-.056 26.818-21.783 48.545-48.601 48.601Zm-104.466-44.61a48.345 48.345 0 0 1-5.781-32.589l1.534.921 51.722 29.826a8.339 8.339 0 0 0 8.441 0l63.181-36.425v25.221a.87.87 0 0 1-.358.665l-52.335 30.184c-23.257 13.398-52.97 5.431-66.404-17.803ZM23.549 85.38a48.499 48.499 0 0 1 25.58-21.333v61.39a8.288 8.288 0 0 0 4.195 7.316l62.874 36.272-21.845 12.636a.819.819 0 0 1-.767 0L41.353 151.53c-23.211-13.454-31.171-43.144-17.804-66.405v.256Zm179.466 41.695-63.08-36.63L161.73 77.86a.819.819 0 0 1 .768 0l52.233 30.184a48.6 48.6 0 0 1-7.316 87.635v-61.391a8.544 8.544 0 0 0-4.4-7.213Zm21.742-32.69-1.535-.922-51.619-30.081a8.39 8.39 0 0 0-8.492 0L99.98 99.808V74.587a.716.716 0 0 1 .307-.665l52.233-30.133a48.652 48.652 0 0 1 72.236 50.391v.205ZM88.061 139.097l-21.845-12.585a.87.87 0 0 1-.41-.614V65.685a48.652 48.652 0 0 1 79.757-37.346l-1.535.87-51.67 29.825a8.595 8.595 0 0 0-4.246 7.367l-.051 72.697Zm11.868-25.58 28.138-16.217 28.188 16.218v32.434l-28.086 16.218-28.188-16.218-.052-32.434Z"/></svg>ChatGPT</span>
+        <span class="logo-item"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="#D97757" d="m4.7144 15.9555 4.7174-2.6471.079-.2307-.079-.1275h-.2307l-.7893-.0486-2.6956-.0729-2.3375-.0971-2.2646-.1214-.5707-.1215-.5343-.7042.0546-.3522.4797-.3218.686.0608 1.5179.1032 2.2767.1578 1.6514.0972 2.4468.255h.3886l.0546-.1579-.1336-.0971-.1032-.0972L6.973 9.8356l-2.55-1.6879-1.3356-.9714-.7225-.4918-.3643-.4614-.1578-1.0078.6557-.7225.8803.0607.2246.0607.8925.686 1.9064 1.4754 2.4893 1.8336.3643.3035.1457-.1032.0182-.0728-.164-.2733-1.3539-2.4467-1.445-2.4893-.6435-1.032-.17-.6194c-.0607-.255-.1032-.4674-.1032-.7285L6.287.1335 6.6997 0l.9957.1336.419.3642.6192 1.4147 1.0018 2.2282 1.5543 3.0296.4553.8985.2429.8318.091.255h.1579v-.1457l.1275-1.706.2368-2.0947.2307-2.6957.0789-.7589.3764-.9107.7468-.4918.5828.2793.4797.686-.0668.4433-.2853 1.8517-.5586 2.9021-.3643 1.9429h.2125l.2429-.2429.9835-1.3053 1.6514-2.0643.7286-.8196.85-.9046.5464-.4311h1.0321l.759 1.1293-.34 1.1657-1.0625 1.3478-.8804 1.1414-1.2628 1.7-.7893 1.36.0729.1093.1882-.0183 2.8535-.607 1.5421-.2794 1.8396-.3157.8318.3886.091.3946-.3278.8075-1.967.4857-2.3072.4614-3.4364.8136-.0425.0304.0486.0607 1.5482.1457.6618.0364h1.621l3.0175.2247.7892.522.4736.6376-.079.4857-1.2142.6193-1.6393-.3886-3.825-.9107-1.3113-.3279h-.1822v.1093l1.0929 1.0686 2.0035 1.8092 2.5075 2.3314.1275.5768-.3218.4554-.34-.0486-2.2039-1.6575-.85-.7468-1.9246-1.621h-.1275v.17l.4432.6496 2.3436 3.5214.1214 1.0807-.17.3521-.6071.2125-.6679-.1214-1.3721-1.9246L14.38 17.959l-1.1414-1.9428-.1397.079-.674 7.2552-.3156.3703-.7286.2793-.6071-.4614-.3218-.7468.3218-1.4753.3886-1.9246.3157-1.53.2853-1.9004.17-.6314-.0121-.0425-.1397.0182-1.4328 1.9672-2.1796 2.9446-1.7243 1.8456-.4128.164-.7164-.3704.0667-.6618.4008-.5889 2.386-3.0357 1.4389-1.882.929-1.0868-.0062-.1579h-.0546l-6.3385 4.1164-1.1293.1457-.4857-.4554.0608-.7467.2307-.2429 1.9064-1.3114Z"/></svg>Claude</span>
+      </div>
+    </div>
+
+    <section class="wrap" id="how">
+      <p class="sec-eyebrow">How it works</p>
+      <h2>From "it's broken" to fixed —<br />in three clicks.</h2>
+      <div class="steps">
+        <div class="step">
+          <span class="step-no">1</span>
+          <h3>It watches, locally</h3>
+          <p>Console errors, crashes, failed requests — captured automatically on every page, even inside the preview iframes where AI-built apps actually run. The badge shows what it caught.</p>
+        </div>
+        <div class="step">
+          <span class="step-no">2</span>
+          <h3>One click when it breaks</h3>
+          <p>Open the popup, optionally click the broken element or add a screenshot, and hit send. Obvious secrets are redacted before anything leaves the popup.</p>
+        </div>
+        <div class="step">
+          <span class="step-no">3</span>
+          <h3>The report lands in your chat</h3>
+          <p>Straight into your Lovable, Bolt, Replit, v0 or Base44 conversation — or prefilled in ChatGPT. Your AI sees exactly what broke, and the fix works on the first try.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="wrap" style="padding-top: 0">
+      <div class="split">
+        <div>
+          <p class="sec-eyebrow">The part nobody else does</p>
+          <h2>It knows your app from the builder's editor.</h2>
+          <p class="sec-lede">
+            Builder pages are noisy. Lovable's own analytics, background requests and
+            framework warnings have nothing to do with the app <em>you</em> built —
+            but every other tool dumps them into your report and sends your AI chasing ghosts.
+          </p>
+          <div class="checklist">
+            <div class="check">
+              <span class="tick"><svg width="10" height="10" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+              <span><strong>Your app first.</strong> Errors from the live preview — the code you actually built — lead the report.</span>
+            </div>
+            <div class="check">
+              <span class="tick"><svg width="10" height="10" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+              <span><strong>Editor noise demoted.</strong> The builder's own background chatter is labeled "usually safe to ignore" — visible, never misleading.</span>
+            </div>
+            <div class="check">
+              <span class="tick"><svg width="10" height="10" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+              <span><strong>Known-harmless filtered.</strong> Ad-SDK warnings, ResizeObserver loops, framework future-flags — silently kept out of your AI's way.</span>
+            </div>
+          </div>
+        </div>
+        <div>
+          <p class="fig-cap">fig. 1 — report on a Lovable project</p>
+          <div class="card">
+            <div class="card-bar"><span class="d"></span><span class="d"></span><span class="d"></span><span class="t">debug-context.md</span></div>
+            <div class="mini-report">
+<span class="sec-h">## Console errors in your app (1)</span>
+<span style="color: var(--danger)">[error]</span> TypeError: cart is
+  undefined at checkout.tsx:18
+
+<span class="sec-h">## Failed requests in your app (1)</span>
+- POST /api/checkout → <span style="color: var(--danger)">500</span>
+
+<div class="muted-block"><span style="font-weight:600">## Lovable editor background</span> (usually safe to ignore)
+[warn] RS SDK timeout · sandbox lease · bing pixel
+…and 12 more — the editor's chatter, not your bug</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="wrap" style="padding-top: 0">
+      <p class="sec-eyebrow">Also in the box</p>
+      <h2>Small tool. Sharp edges.</h2>
+      <div class="grid4">
+        <div class="feat">
+          <span class="ic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M4 4h6v6H4zM14 14h6v6h-6z" stroke="currentColor" stroke-width="2"/><path d="M10 17H7a3 3 0 0 1-3-3v-1M14 7h3a3 3 0 0 1 3 3v1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>
+          <h3>Element picker</h3>
+          <p>Click the broken part of the page — its selector, HTML and key styles go into the report.</p>
+        </div>
+        <div class="feat">
+          <span class="ic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="2"/><path d="m3 15 5-5 4 4 3-3 6 6" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></span>
+          <h3>Region screenshots</h3>
+          <p>Snip exactly the broken area as a second paste for vision-capable models.</p>
+        </div>
+        <div class="feat">
+          <span class="ic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M12 2 4 5.5V11c0 5 3.4 9.4 8 11 4.6-1.6 8-6 8-11V5.5L12 2Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="m9 12 2 2 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          <h3>Always-on redaction</h3>
+          <p>API keys, tokens, JWTs and passwords become [REDACTED] before anything is copied.</p>
+        </div>
+        <div class="feat">
+          <span class="ic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/></svg></span>
+          <h3>Sees inside iframes</h3>
+          <p>AI-built apps run in preview iframes. Context Grabber captures there too — DevTools-free.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="wrap" id="pro" style="padding-top: 0">
+      <p class="sec-eyebrow">Pro</p>
+      <h2>Free forever. Pro when it's your job.</h2>
+      <p class="sec-lede">
+        The full capture-and-send flow is free, always. Pro adds the formats that save
+        professionals time when clients and teammates are waiting.
+      </p>
+      <div class="pro-card">
+        <div class="pro-left">
+          <span class="soon">One-time purchase · coming soon</span>
+          <div class="price"><span class="n">$29</span><span class="per">lifetime — no subscription</span></div>
+          <p style="margin-top: 12px; font-size: 13.5px; line-height: 1.6; color: var(--ink-2)">
+            For freelancers and indie hackers shipping real apps on AI builders:
+            hand clients a plain-English summary, teammates a technical hand-off,
+            and yourself the response bodies that name the root cause.
+          </p>
+        </div>
+        <div class="pro-right">
+          <span class="pro-item"><span class="tick"><svg width="8" height="8" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Client-ready plain-English summaries</span>
+          <span class="pro-item"><span class="tick"><svg width="8" height="8" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Developer hand-off & GitHub issue formats</span>
+          <span class="pro-item"><span class="tick"><svg width="8" height="8" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Response-body inspector (the "why" behind 4xx/5xx)</span>
+          <span class="pro-item"><span class="tick"><svg width="8" height="8" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Unlimited element picker & report downloads</span>
+        </div>
+      </div>
+    </section>
+
+    <div class="band">
+      <div class="wrap band-inner">
+        <span class="seal" aria-hidden="true">
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none">
+            <path d="M21 8 12 3 3 8v8l9 5 9-5V8Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" />
+            <path d="M3 8l9 5 9-5M12 13v9" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" />
+          </svg>
+        </span>
+        <div>
+          <h2>Privacy isn't a promise here. It's the architecture.</h2>
+          <p>
+            No servers, no telemetry, no account. Everything Context Grabber captures is
+            processed and stored in your browser and goes only where <strong>you</strong> send it.
+            Secrets are redacted before a report ever reaches your clipboard.
+            <a href="privacy.html">Read the two-minute privacy policy →</a>
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      <div class="wrap foot-inner">
+        <span style="display: inline-flex; align-items: center; gap: 9px">
+          <span class="mark" style="width: 26px; height: 26px; border-radius: 7px" aria-hidden="true">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+              <path d="M21 8 12 3 3 8v8l9 5 9-5V8Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round" />
+              <path d="M3 8l9 5 9-5M12 13v9" stroke="currentColor" stroke-width="2" stroke-linejoin="round" />
+            </svg>
+          </span>
+          Context Grabber — built for honest, first-try AI bug fixes.
+        </span>
+        <div class="foot-links">
+          <a href="privacy.html">Privacy</a>
+          <a href="https://github.com/ChristophBarton1/Context-Finder">GitHub</a>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>
