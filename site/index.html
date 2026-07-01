@@ -96,20 +96,10 @@
       .gh:hover { color: var(--ink); }
       @media (max-width: 720px) { .nav-links { display: none; } }
 
-      /* ---------- unified eyebrow pill ---------- */
-      .eyebrow {
-        display: inline-flex; align-items: center; gap: 8px;
-        font-family: var(--mono); font-size: 12px; font-weight: 600;
-        letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent);
-        border: 1px solid rgba(79, 94, 232, 0.25); border-radius: 100px;
-        background: var(--surface); padding: 7px 16px;
-      }
-      .eyebrow .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--ok); flex: none; }
-
       /* ---------- hero ---------- */
       .hero { padding: clamp(88px, 8vw, 120px) 0 0; text-align: center; }
       h1 {
-        margin: 28px auto 0; max-width: 1000px;
+        margin: 0 auto; max-width: 1000px;
         font-size: clamp(2.8rem, 6.2vw, 5.6rem);
         font-weight: 700; line-height: 1.0; letter-spacing: -0.04em;
         text-wrap: balance;
@@ -242,7 +232,7 @@
       section { padding: clamp(120px, 10.5vw, 168px) 0; }
       .sec-head { text-align: center; max-width: 840px; margin: 0 auto; }
       h2 {
-        margin-top: 20px; font-size: clamp(2.4rem, 3.1vw, 3.6rem);
+        margin-top: 0; font-size: clamp(2.4rem, 3.1vw, 3.6rem);
         font-weight: 700; letter-spacing: -0.025em; line-height: 1.07;
         text-wrap: balance;
       }
@@ -279,8 +269,7 @@
       }
       .split { display: grid; gap: clamp(52px, 6.4vw, 100px); align-items: center; }
       @media (min-width: 940px) { .split { grid-template-columns: minmax(440px, 560px) 1fr; } }
-      .split h2 { text-align: left; margin-top: 20px; }
-      .split .sec-eyebrow-row { text-align: left; }
+      .split h2 { text-align: left; }
       .split .sec-lede { margin-left: 0; text-align: left; }
       .fig-cap { font-family: var(--mono); font-size: 11.5px; color: var(--ink-3); letter-spacing: 0.06em; margin-bottom: 12px; }
       .fig-card {
@@ -440,8 +429,8 @@
         <a href="#" style="display: flex; align-items: center; gap: 12px">
           <span class="mark" aria-hidden="true">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-              <path d="M21 8 12 3 3 8v8l9 5 9-5V8Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round" />
-              <path d="M3 8l9 5 9-5M12 13v9" stroke="currentColor" stroke-width="2" stroke-linejoin="round" />
+              <path d="M9 4H7a3 3 0 0 0-3 3v2M15 4h2a3 3 0 0 1 3 3v2M20 15v2a3 3 0 0 1-3 3h-2M4 15v2a3 3 0 0 0 3 3h2" stroke="currentColor" stroke-width="2" stroke-linejoin="round" />
+              <circle cx="12" cy="12" r="3.2" fill="currentColor" />
             </svg>
           </span>
           <span class="wordmark">Context Grabber</span>
@@ -463,7 +452,6 @@
 
     <header class="hero">
       <div class="wrap">
-        <span class="eyebrow rise"><span class="dot"></span>Chrome extension · 100% local</span>
         <h1 class="rise" style="animation-delay: 0.06s">
           Your AI built it.<br />Now tell it <em class="serif">what broke.</em>
         </h1>
@@ -571,7 +559,6 @@
     <section id="how">
       <div class="wrap">
         <div class="sec-head">
-          <span class="eyebrow"><span class="dot"></span>How it works</span>
           <h2>From "it's broken" to <em class="serif">fixed</em> — in three clicks.</h2>
           <p class="sec-lede">No DevTools, no copy-pasting stack traces, no explaining. The extension does the technical part; you just click send.</p>
         </div>
@@ -603,7 +590,6 @@
       <section>
         <div class="wrap split">
           <div>
-            <div class="sec-eyebrow-row"><span class="eyebrow"><span class="dot"></span>The part nobody else does</span></div>
             <h2>It knows <em class="serif">your app</em> from the builder's editor.</h2>
             <p class="sec-lede">
               Builder pages are noisy. Lovable's own analytics, background requests and
@@ -663,7 +649,6 @@
       <section>
         <div class="wrap">
           <div class="sec-head">
-            <span class="eyebrow"><span class="dot"></span>Also in the box</span>
             <h2>Small tool. <em class="serif">Sharp edges.</em></h2>
             <p class="sec-lede">Every piece exists to make the report your AI reads sharper — nothing else.</p>
           </div>
@@ -733,7 +718,6 @@
     <section id="pro">
       <div class="wrap">
         <div class="sec-head">
-          <span class="eyebrow"><span class="dot"></span>Pro</span>
           <h2>Free forever.<br /><em class="serif">Pro</em> when it's your job.</h2>
           <p class="sec-lede">
             The full capture-and-send flow is free, always. Pro adds the formats that save
@@ -791,8 +775,8 @@
           <span style="display: inline-flex; align-items: center; gap: 11px; color: #faf9f7">
             <span class="mark" style="width: 30px; height: 30px; border-radius: 8px" aria-hidden="true">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
-                <path d="M21 8 12 3 3 8v8l9 5 9-5V8Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round" />
-                <path d="M3 8l9 5 9-5M12 13v9" stroke="currentColor" stroke-width="2" stroke-linejoin="round" />
+                <path d="M9 4H7a3 3 0 0 0-3 3v2M15 4h2a3 3 0 0 1 3 3v2M20 15v2a3 3 0 0 1-3 3h-2M4 15v2a3 3 0 0 0 3 3h2" stroke="currentColor" stroke-width="2" stroke-linejoin="round" />
+                <circle cx="12" cy="12" r="3.2" fill="currentColor" />
               </svg>
             </span>
             <span style="font-weight: 600; font-size: 16px">Context Grabber</span>

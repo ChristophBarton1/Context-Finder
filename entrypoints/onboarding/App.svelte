@@ -49,8 +49,8 @@
 
 {#snippet cubeLogo(size: number)}
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true">
-    <path d="M21 8 12 3 3 8v8l9 5 9-5V8Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round" />
-    <path d="M3 8l9 5 9-5M12 13v9" stroke="currentColor" stroke-width="2" stroke-linejoin="round" />
+    <path d="M9 4H7a3 3 0 0 0-3 3v2M15 4h2a3 3 0 0 1 3 3v2M20 15v2a3 3 0 0 1-3 3h-2M4 15v2a3 3 0 0 0 3 3h2" stroke="currentColor" stroke-width="2" stroke-linejoin="round" />
+    <circle cx="12" cy="12" r="3.2" fill="currentColor" />
   </svg>
 {/snippet}
 
@@ -76,10 +76,6 @@
       {@render cubeLogo(17)}
     </span>
     <span class="text-[16px] font-medium tracking-[-0.01em]">Context Grabber</span>
-    <span class="ml-auto flex items-center gap-1.5 rounded-full border border-border-strong bg-surface px-2.5 py-1 text-[11px] font-medium text-ink-2">
-      <span class="h-[5px] w-[5px] rounded-full bg-ok"></span>
-      Local only
-    </span>
   </header>
 
   <div class="grid items-start gap-16 lg:grid-cols-[1fr_400px]">

@@ -486,8 +486,8 @@
   <header class="flex items-center gap-2.5 px-5 pt-4 pb-3">
     <span class="flex h-[26px] w-[26px] items-center justify-center rounded-[7px] bg-accent-soft">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" class="text-accent" aria-hidden="true">
-        <path d="M21 8 12 3 3 8v8l9 5 9-5V8Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round" />
-        <path d="M3 8l9 5 9-5M12 13v9" stroke="currentColor" stroke-width="2" stroke-linejoin="round" />
+        <path d="M9 4H7a3 3 0 0 0-3 3v2M15 4h2a3 3 0 0 1 3 3v2M20 15v2a3 3 0 0 1-3 3h-2M4 15v2a3 3 0 0 0 3 3h2" stroke="currentColor" stroke-width="2" stroke-linejoin="round" />
+        <circle cx="12" cy="12" r="3.2" fill="currentColor" />
       </svg>
     </span>
     <h1 class="text-[13px] font-semibold tracking-[-0.01em]">Context Grabber</h1>
