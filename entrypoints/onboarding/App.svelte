@@ -24,7 +24,7 @@
     },
     {
       title: 'Send it to your AI',
-      text: 'Hit "Send to Claude" (or ChatGPT, Cursor, Gemini …) — the chat opens with the full report already in the input. Your AI sees exactly what broke and where.',
+      text: 'Hit "Send to Claude" or ChatGPT — or straight into your Lovable/Bolt chat. The full report lands in the input, ready to send. Tools like Cursor get a perfectly formatted copy to paste.',
     },
   ];
 
@@ -36,7 +36,7 @@
     },
     {
       title: 'Made for AI workflows',
-      text: 'One report format per tool: Claude, ChatGPT, Cursor, Claude Code, Gemini, Grok — opened with the context already in the chat.',
+      text: 'One report format per tool: Claude, ChatGPT, Gemini, Grok, Cursor, Claude Code — plus direct injection into Lovable, Bolt, Replit, v0 & Base44 chats.',
       icon: 'spark',
     },
     {
@@ -207,12 +207,12 @@
           <p class="text-center text-[8.5px] leading-tight text-ink-3">Errors</p>
         </div>
         <div class="flex flex-col items-center rounded-lg border border-line bg-surface px-1 py-2">
-          <p class="text-[14px] font-semibold text-danger">1</p>
-          <p class="text-center text-[8.5px] leading-tight text-ink-3">Network Fails</p>
+          <p class="text-[14px] font-semibold">0</p>
+          <p class="text-center text-[8.5px] leading-tight text-ink-3">CSP Issues</p>
         </div>
         <div class="flex flex-col items-center rounded-lg border border-line bg-surface px-1 py-2">
-          <p class="text-[14px] font-semibold">React</p>
-          <p class="text-center text-[8.5px] leading-tight text-ink-3">Detected</p>
+          <p class="text-[14px] font-semibold text-danger">1</p>
+          <p class="text-center text-[8.5px] leading-tight text-ink-3">Network Fails</p>
         </div>
         <div class="flex flex-col items-center rounded-lg border border-accent bg-accent-soft px-1 py-2">
           <p class="text-[14px] font-semibold text-ink">3</p>
@@ -254,8 +254,8 @@ fix…</pre>
       </div>
       <p class="mt-3 text-[12px] leading-relaxed text-ink-3">
         Structured, complete, redacted — and sent straight into Claude, ChatGPT
-        or Cursor with one click. The difference between “it doesn't work” and
-        a fix that works on the first try.
+        or your Lovable chat with one click. The difference between “it doesn't
+        work” and a fix that works on the first try.
       </p>
     </aside>
   </div>
