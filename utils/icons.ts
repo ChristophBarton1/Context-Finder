@@ -67,7 +67,9 @@ export const TARGET_ICONS: Record<string, BrandIcon> = {
     viewBox: '0 0 256 260',
   },
   'claude-code': icon(siAnthropic),
-  'codex-cli': {},
+  // OpenAI removed its marks from simple-icons (trademark); a terminal-prompt
+  // monogram reads as "CLI" and stays visible in both themes.
+  'codex-cli': { monogram: '>_' },
   cursor: icon(siCursor),
   windsurf: icon(siWindsurf),
   gemini: icon(siGooglegemini),

@@ -56,6 +56,20 @@
   let tabId: number | undefined;
   let pageUrl = '';
   let expectationEl: HTMLTextAreaElement | undefined = $state();
+  let menuEl: HTMLDivElement | undefined = $state();
+
+  // Close the format dropdown on outside click / Escape. Escape must not
+  // fall through to Chrome (which would close the whole popup) while the
+  // menu is open.
+  function onWindowClick(e: MouseEvent) {
+    if (menuOpen && menuEl && !menuEl.contains(e.target as Node)) menuOpen = false;
+  }
+  function onWindowKeydown(e: KeyboardEvent) {
+    if (e.key === 'Escape' && menuOpen) {
+      e.preventDefault();
+      menuOpen = false;
+    }
+  }
 
   const target = $derived(EXPORT_TARGETS.find((t) => t.id === targetId) ?? EXPORT_TARGETS[0]);
   const picksLeft = $derived(pro ? 999 : Math.max(0, FREE_PICKS_PER_DAY - picksUsedToday));
@@ -157,9 +171,14 @@
       }
 
       try {
-        const stored = await browser.storage.session.get([`picked_${tabId}`, `shot_${tabId}`]);
+        const stored = await browser.storage.session.get([
+          `picked_${tabId}`,
+          `shot_${tabId}`,
+          `expectation_${tabId}`,
+        ]);
         picked = (stored[`picked_${tabId}`] as PickedElement) ?? null;
         shotUrl = (stored[`shot_${tabId}`] as string) ?? null;
+        expectation = (stored[`expectation_${tabId}`] as string) ?? '';
 
         const hist = await browser.storage.local.get('cg:history');
         history = (hist['cg:history'] as HistoryEntry[]) ?? [];
@@ -244,6 +263,14 @@
       view = 'ready';
     })();
     return () => clearInterval(interval);
+  });
+
+  // Persist the typed repro text per tab: "Point at the bug" and "Select
+  // area" close the popup, and losing the description on reopen hurts.
+  $effect(() => {
+    const v = expectation;
+    if (tabId == null || view !== 'ready') return;
+    browser.storage.session.set({ [`expectation_${tabId}`]: v }).catch(() => {});
   });
 
   function selectTarget(id: string) {
@@ -480,6 +507,8 @@
     <path d="M8 11V8a4 4 0 1 1 8 0v3" stroke="currentColor" stroke-width="2" />
   </svg>
 {/snippet}
+
+<svelte:window onclick={onWindowClick} onkeydown={onWindowKeydown} />
 
 <main class="w-[400px] font-sans text-[13px] leading-normal antialiased">
   <!-- Header -->
@@ -738,11 +767,13 @@
           </button>
         </div>
 
-        <div class="relative grid grid-cols-[1fr_auto] gap-2">
+        <div class="relative grid grid-cols-[1fr_auto] gap-2" bind:this={menuEl}>
           <button
             onclick={() => (menuOpen = !menuOpen)}
             class="flex h-10 items-center gap-2.5 rounded-xl border border-line bg-surface px-3.5 text-[12.5px] font-medium transition-colors hover:border-line-strong"
             aria-label="Choose export format"
+            aria-expanded={menuOpen}
+            aria-haspopup="listbox"
           >
             {@render brandIcon(TARGET_ICONS[target.id], 15)}
             {target.label}
