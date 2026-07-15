@@ -43,5 +43,7 @@ export interface PickedElement {
   time: string;
 }
 
-export const FREE_PICKS_PER_DAY = 3;
+// Generous on purpose: the picker is the free tier's wow moment and word-of-
+// mouth engine; Pro's anchor is the response inspector, not this limit.
+export const FREE_PICKS_PER_DAY = 10;
 export const FREE_NETWORK_LIMIT = 5;

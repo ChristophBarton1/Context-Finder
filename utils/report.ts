@@ -280,7 +280,9 @@ export function buildReport(opts: ReportOptions): { text: string; redactedCount:
   lines.push(task);
   lines.push('');
   lines.push('---');
-  lines.push('_Generated with Context Grabber — 100% locally, no data left this computer_');
+  lines.push(
+    '_Generated with Context Grabber (christophbarton1.github.io/Context-Finder) — 100% locally, no data left this computer_'
+  );
 
   return (({ text, count }) => ({ text, redactedCount: count }))(redact(lines.join('\n')));
 }
