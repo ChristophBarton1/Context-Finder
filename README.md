@@ -22,7 +22,7 @@
 
 When an AI-built app breaks, typing "it doesn't work" into the chat forces the AI to guess. Context Grabber is a browser extension that captures what really went wrong (console errors, failed requests, broken assets, the element you're pointing at) and drops a structured, AI-ready report directly into the chat of Lovable, Bolt, Replit, v0 or Base44, or opens Claude/ChatGPT/Grok with it prefilled. Everything runs **locally** in the browser: no servers, no telemetry, no account.
 
-## ✨ Features
+## Features
 
 - **Automatic capture** on every page, including inside iframes (e.g. Lovable/Bolt previews): console errors and warnings, uncaught exceptions, unhandled promise rejections, failed `fetch`/XHR requests, broken images/scripts/stylesheets and CSP-blocked requests. A badge shows the live error count per tab.
 - **Send to Builder**: on a Lovable, Bolt.new, Replit, v0 or Base44 project page, one click writes the report into the builder's own chat composer (no auto-submit, you review and send). Claude, ChatGPT and Grok open with the report prefilled; other tools (Claude Code, Codex CLI, Cursor, Windsurf, Gemini, GitHub) get a formatted copy.
@@ -33,7 +33,7 @@ When an AI-built app breaks, typing "it doesn't work" into the chat forces the A
 - **Zero page interference**: capture hooks preserve native `toString`, `name` and arity; picker UI lives in a closed shadow DOM on a pointer-transparent host; every hook is wrapped in try/catch and passes through to the original.
 - **Polished UX**: light and dark mode, plus a first-run onboarding page with an intentional demo bug.
 
-## 🧱 Tech stack
+## Tech stack
 
 | Area | Technology |
 | --- | --- |
@@ -45,7 +45,7 @@ When an AI-built app breaks, typing "it doesn't work" into the chat forces the A
 | Licensing (optional Pro) | Lemon Squeezy public License API |
 | Landing / privacy pages | Static HTML in `site/`, deployable via GitHub Actions (Pages) or Netlify |
 
-## 🏗️ Architecture
+## Architecture
 
 ```mermaid
 flowchart LR
@@ -80,7 +80,7 @@ flowchart LR
 | `utils/trackers.ts` | Known ad/analytics endpoints and benign console patterns. |
 | `utils/types.ts` | Shared capture/report types. |
 
-## 🚀 Getting started
+## Getting started
 
 **Prerequisites:** Node.js 18+ and npm.
 
@@ -97,7 +97,7 @@ To load the build manually: run `npm run build`, open `chrome://extensions`, ena
 
 No environment variables are required.
 
-## 📁 Project structure
+## Project structure
 
 ```
 .
@@ -115,7 +115,7 @@ No environment variables are required.
 └── wxt.config.ts              # manifest + build config
 ```
 
-## 🔒 Privacy
+## Privacy
 
 Capture, processing and storage happen entirely in the browser. Permissions are limited to `activeTab`, `storage` and `clipboardWrite`, plus host access to read page errors. The only network request the extension can ever make is the optional Pro license activation/validation, which sends nothing but the license key and an instance id.
 
