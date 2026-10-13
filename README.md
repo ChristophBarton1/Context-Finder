@@ -130,6 +130,6 @@ Capture, processing and storage happen entirely in the browser. Permissions are 
 
 <div align="center">
 
-Built by [Christoph Barton](https://christophbarton.com)
+Built by [Christoph Barton](https://christophbarton.com) · [More projects](https://github.com/ChristophBarton1)
 
 </div>
